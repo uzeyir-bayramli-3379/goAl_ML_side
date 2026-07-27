@@ -36,7 +36,7 @@ user_prompt = f"Landmark: the Maiden Tower in Baku\nGenerate a short overview 1-
 response = client.chat.completions.create(
     model="google/gemma-3n-e2b-it",
     messages=[
-        {"role": "assistant", "content": system_prompt},
+        {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_prompt}
     ]
 )

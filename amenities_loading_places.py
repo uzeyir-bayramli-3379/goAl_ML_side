@@ -9,20 +9,16 @@ DATABASE_URL must be the Supabase SESSION POOLER URL
 (...pooler.supabase.com, user postgres.<project-ref>) — the direct connection
 is IPv6-only and fails on this network.
 
-The existing `amenities` table has the OSM column set; this loader targets
-the same table name with the new Places schema. Run with --recreate ONCE to
-drop the OSM-shaped table and create the new one (destructive — the OSM data
-is superseded, but the flag makes that an explicit choice, not a side effect).
+Targets its OWN table, `amenities_places`. The OSM-shaped `amenities` table is
+left alone on purpose: it is the comparison baseline for measuring how stale
+the OSM data actually was. Nothing here drops anything.
 
 Run:
-    python amenities_loading_places.py --recreate   # first run: drop old OSM table, create new
-    python amenities_loading_places.py              # subsequent runs: idempotent upsert
+    python amenities_loading_places.py    # idempotent — safe to re-run
 """
 
-import argparse
 import csv
 import os
-import sys
 
 import psycopg2
 from dotenv import load_dotenv
@@ -33,7 +29,7 @@ load_dotenv()
 CSV_FILE = "baku_amenities_places.csv"
 
 DDL = """
-CREATE TABLE IF NOT EXISTS amenities (
+CREATE TABLE IF NOT EXISTS amenities_places (
     id              BIGSERIAL PRIMARY KEY,
     place_id        TEXT NOT NULL UNIQUE,
     name            TEXT NOT NULL,
@@ -49,16 +45,10 @@ CREATE TABLE IF NOT EXISTS amenities (
 """
 
 
-def main(recreate=False):
+def main():
     conn = psycopg2.connect(os.getenv("DATABASE_URL"))
     cur = conn.cursor()
 
-    if recreate:
-        answer = input("--recreate will DROP TABLE amenities (OSM data lost). Proceed? [y/N] ")
-        if answer.strip().lower() != "y":
-            print("Aborted.")
-            sys.exit(0)
-        cur.execute("DROP TABLE IF EXISTS amenities")
     cur.execute(DDL)
     conn.commit()
 
@@ -75,7 +65,7 @@ def main(recreate=False):
             ))
 
     execute_values(cur, """
-        INSERT INTO amenities (
+        INSERT INTO amenities_places (
             place_id, name, category, latitude, longitude,
             opening_hours, address, business_status, fetched_at
         ) VALUES %s
@@ -89,7 +79,7 @@ def main(recreate=False):
     # ---------- 2. BUILD GEOM ----------
     # longitude FIRST — ST_MakePoint takes (x=lng, y=lat).
     cur.execute("""
-        UPDATE amenities
+        UPDATE amenities_places
         SET geom = ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)::geography
         WHERE geom IS NULL AND longitude IS NOT NULL AND latitude IS NOT NULL
     """)
@@ -97,18 +87,18 @@ def main(recreate=False):
 
     # ---------- 3. GIST INDEX ----------
     cur.execute("""
-        CREATE INDEX IF NOT EXISTS amenities_geom_gist
-        ON amenities USING GIST (geom)
+        CREATE INDEX IF NOT EXISTS amenities_places_geom_gist
+        ON amenities_places USING GIST (geom)
     """)
     conn.commit()
     print("Geom built and GIST index ready")
 
     # ---------- 4. SANITY CHECK ----------
-    cur.execute("SELECT category, COUNT(*) FROM amenities GROUP BY category ORDER BY 2 DESC")
+    cur.execute("SELECT category, COUNT(*) FROM amenities_places GROUP BY category ORDER BY 2 DESC")
     print("\nPer-category counts in DB:")
     for category, count in cur.fetchall():
         print(f"  {category or 'NULL':15s} {count}")
-    cur.execute("SELECT COUNT(*) FROM amenities")
+    cur.execute("SELECT COUNT(*) FROM amenities_places")
     total = cur.fetchone()[0]
     print(f"\nDB total: {total}  vs CSV rows: {len(rows)}"
           + ("  (MISMATCH — investigate)" if total != len(rows) else "  (match)"))
@@ -118,8 +108,4 @@ def main(recreate=False):
 
 
 if __name__ == "__main__":
-    ap = argparse.ArgumentParser(description="Load Google Places amenities into Supabase.")
-    ap.add_argument("--recreate", action="store_true",
-                    help="DROP the existing (OSM-shaped) amenities table and recreate")
-    args = ap.parse_args()
-    main(recreate=args.recreate)
+    main()

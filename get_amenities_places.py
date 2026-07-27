@@ -16,7 +16,9 @@ the same CORE_BOX the Overpass query used into overlapping search circles
 coarse grid where the 20-cap doesn't bind.
 
 Discipline carried over from the OSM pipeline:
-  - Null, never guess: missing hours/address -> None, never "" or a guess.
+  - Null, never guess: missing address -> None, never "" or a guess. Opening
+    hours are not fetched at all (Enterprise SKU) so opening_hours is always
+    None — the serving layer must never claim a place is open.
   - Flag, don't drop: only rows missing id/name/coords are dropped, counted
     with reasons. Non-OPERATIONAL places are excluded but COUNTED — the
     closed counts are our staleness metric, we want to see them.
@@ -41,6 +43,7 @@ Run:
 """
 
 import argparse
+import hashlib
 import json
 import math
 import os
@@ -57,21 +60,30 @@ load_dotenv()
 NEARBY_URL = "https://places.googleapis.com/v1/places:searchNearby"
 TEXT_URL = "https://places.googleapis.com/v1/places:searchText"
 
-# Minimal field mask — field masks determine the billing SKU. Do NOT add
-# atmosphere/contact fields we don't use.
+# The field mask determines the billing SKU, and a request bills at the HIGHEST
+# SKU any requested field belongs to. Every field below is Nearby Search Pro
+# (5,000 free calls/month). Adding one Enterprise field — regularOpeningHours is
+# the trap, it was in here originally — drops the whole run to the Enterprise
+# allowance (1,000 free calls/month), an 80% cut. Before adding ANY field, check
+# it against Google's Enterprise/Enterprise+Atmosphere trigger list first.
+# businessStatus stays: it is Pro-tier and it is our staleness metric.
 FIELD_MASK = ",".join([
     "places.id",
     "places.displayName",
     "places.location",
     "places.types",
     "places.businessStatus",
-    "places.regularOpeningHours",
     "places.formattedAddress",
 ])
 
 # Same core box as the Overpass query in get_amenities.py, so "the core"
 # means the same thing app-wide.
 CORE_BOX = {"lat": (40.34, 40.44), "lon": (49.79, 49.90)}
+
+# Hard API cap: Nearby/Text Search return at most 20 places and the new API has
+# no pagination. A task that comes back with exactly this many was TRUNCATED —
+# see the saturation check in parse_places.
+MAX_RESULT_COUNT = 20
 
 REQUEST_TIMEOUT = 30
 MAX_RETRIES = 4
@@ -245,7 +257,7 @@ def fetch_task(task, key):
     if task["kind"] == "nearby":
         body = {
             "includedTypes": task["types"],
-            "maxResultCount": 20,
+            "maxResultCount": MAX_RESULT_COUNT,
             "locationRestriction": {"circle": {
                 "center": {"latitude": task["lat"], "longitude": task["lng"]},
                 "radius": float(task["radius"]),
@@ -256,7 +268,7 @@ def fetch_task(task, key):
     # out-of-box hits are possible — filtered against CORE_BOX in parsing.
     body = {
         "textQuery": task["query"],
-        "pageSize": 20,
+        "pageSize": MAX_RESULT_COUNT,
         "locationBias": {"circle": {
             "center": {"latitude": task["lat"], "longitude": task["lng"]},
             "radius": float(task["radius"]),
@@ -267,11 +279,45 @@ def fetch_task(task, key):
 
 # --- Checkpointing ----------------------------------------------------------
 
+def plan_fingerprint():
+    """Hash of everything that changes what a cached response MEANS: the field
+    mask (which fields the response contains) and the query/grid plan (which
+    task_id maps to which category)."""
+    blob = json.dumps({
+        "field_mask": FIELD_MASK,
+        "grids": GRIDS,
+        "nearby": NEARBY_QUERIES,
+        "text": TEXT_QUERIES,
+    }, sort_keys=True, default=str)
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()[:16]
+
+
 def load_checkpoint():
-    if os.path.exists(CHECKPOINT_FILE):
-        with open(CHECKPOINT_FILE, encoding="utf-8") as f:
-            return json.load(f)
-    return {"tasks": {}}
+    """Refuse to resume a checkpoint built under a different plan. Stale cached
+    responses carry the wrong field set, and stale task_ids no longer in the
+    plan would silently fall through parse_places' fallback to 'restaurant'."""
+    if not os.path.exists(CHECKPOINT_FILE):
+        return {"fingerprint": plan_fingerprint(), "tasks": {}}
+
+    with open(CHECKPOINT_FILE, encoding="utf-8") as f:
+        ckpt = json.load(f)
+
+    current = plan_fingerprint()
+    stored = ckpt.get("fingerprint")
+    if stored != current:
+        print(f"\nCheckpoint {CHECKPOINT_FILE} was written under a different "
+              f"query plan (fingerprint {stored or 'ABSENT (pre-fingerprint file)'} "
+              f"!= {current}).")
+        print("FIELD_MASK, GRIDS, NEARBY_QUERIES or TEXT_QUERIES changed since "
+              "it was written, so its cached responses have the wrong fields "
+              "and/or its task ids no longer match the plan. Resuming would "
+              "write silently wrong categories.")
+        print(f"Delete {CHECKPOINT_FILE} and re-run to start fresh. "
+              "Not deleting it automatically — that is your call.")
+        sys.exit(1)
+
+    ckpt.setdefault("tasks", {})
+    return ckpt
 
 
 def save_checkpoint(ckpt):
@@ -296,11 +342,15 @@ def _categorize(place, fallback):
 
 def parse_places(ckpt, tasks_by_id, verbose=True):
     """Dedupe by place id across overlapping circles, filter to OPERATIONAL,
-    drop only rows missing id/name/coords (counted), keep NULLs elsewhere."""
+    drop only rows missing id/name/coords (counted), keep NULLs elsewhere.
+
+    Returns (df, saturated_ids). A non-empty saturated_ids means the run is
+    INCOMPLETE — see the 20-result cap note on MAX_RESULT_COUNT."""
     seen = {}
     status_counts = {}
     drop_counts = {}
     out_of_box = 0
+    saturated_ids = []
     today = date.today().isoformat()
 
     for task_id, places in ckpt["tasks"].items():
@@ -308,6 +358,12 @@ def parse_places(ckpt, tasks_by_id, verbose=True):
         is_text = task.get("kind") == "text"
         fallback = (task.get("category") if is_text
                     else CATEGORY_MAP[task.get("types", ["restaurant"])[0]])
+
+        # Saturation is measured on the RAW response, before dedup/filtering:
+        # a full page means the API truncated, regardless of how many rows
+        # survive downstream.
+        if len(places) >= MAX_RESULT_COUNT:
+            saturated_ids.append(task_id)
 
         for p in places:
             pid = p.get("id")
@@ -335,14 +391,17 @@ def parse_places(ckpt, tasks_by_id, verbose=True):
             if status in ("CLOSED_TEMPORARILY", "CLOSED_PERMANENTLY"):
                 continue  # excluded but counted — this is the staleness metric
 
-            hours = p.get("regularOpeningHours")
             seen[pid] = {
                 "place_id": pid,
                 "name": name,
                 "category": _categorize(p, fallback),
                 "lat": lat,
                 "lng": lng,
-                "opening_hours": json.dumps(hours, ensure_ascii=False) if hours else None,
+                # Always None: regularOpeningHours is an Enterprise-SKU field and
+                # is no longer requested (see FIELD_MASK). Column kept so the CSV
+                # and DB schema stay stable if we ever pay for it. NULL = unknown,
+                # which is what the serving layer already assumes.
+                "opening_hours": None,
                 "address": p.get("formattedAddress"),  # None if absent — no fabrication
                 "business_status": status,
                 "fetched_at": today,
@@ -351,6 +410,20 @@ def parse_places(ckpt, tasks_by_id, verbose=True):
     df = pd.DataFrame(seen.values()).sort_values(["category", "name"]) if seen else pd.DataFrame()
 
     if verbose:
+        if saturated_ids:
+            groups = {}
+            for tid in saturated_ids:
+                parts = tid.split("|")
+                groups["|".join(parts[1:3])] = groups.get("|".join(parts[1:3]), 0) + 1
+            breakdown = ", ".join(f"{g}: {n}" for g, n in
+                                  sorted(groups.items(), key=lambda kv: -kv[1]))
+            print(f"\nWARNING: {len(saturated_ids)} tiles hit the "
+                  f"{MAX_RESULT_COUNT}-result cap ({breakdown}) — results "
+                  f"truncated, these tiles need a finer grid.")
+            print(f"Saturated task ids: {', '.join(sorted(saturated_ids))}")
+            print("RUN IS INCOMPLETE — places were missed. The counts below are "
+                  "a LOWER BOUND, not a coverage report.")
+
         print(f"\nUnique places kept: {len(seen)}")
         print(f"businessStatus counts (staleness metric): {status_counts}")
         if drop_counts:
@@ -359,7 +432,7 @@ def parse_places(ckpt, tasks_by_id, verbose=True):
             print(f"Text-search hits outside CORE_BOX discarded: {out_of_box}")
         if len(df):
             print(f"\nBy category:\n{df['category'].value_counts().to_string()}")
-    return df
+    return df, saturated_ids
 
 
 # --- Entry points -----------------------------------------------------------
@@ -397,8 +470,8 @@ def run(dry_run=False, sample=False, assume_yes=False):
         task = tasks[0]
         print(f"\n--sample: fetching one tile only -> {task['id']}")
         places = fetch_task(task, key)
-        ckpt = {"tasks": {task["id"]: places}}
-        df = parse_places(ckpt, {t["id"]: t for t in tasks})
+        ckpt = {"fingerprint": plan_fingerprint(), "tasks": {task["id"]: places}}
+        df, _ = parse_places(ckpt, {t["id"]: t for t in tasks})
         if len(df):
             print(f"\nSample parsed rows:\n{df.head(20).to_string(index=False)}")
         else:
@@ -431,9 +504,12 @@ def run(dry_run=False, sample=False, assume_yes=False):
             print(f"  {n}/{len(remaining)} tasks done ({len(done) + n} total)")
         time.sleep(POLITE_DELAY)
 
-    df = parse_places(ckpt, {t["id"]: t for t in tasks})
+    df, saturated = parse_places(ckpt, {t["id"]: t for t in tasks})
     df.to_csv(OUTPUT_CSV, index=False)
     print(f"\nWrote {len(df)} rows -> {OUTPUT_CSV}")
+    if saturated:
+        print(f"Reminder: {len(saturated)} tiles were saturated — "
+              f"{OUTPUT_CSV} is INCOMPLETE coverage, not a full census of the box.")
 
 
 if __name__ == "__main__":
