@@ -3,4 +3,4 @@
 .vscode
 __pycache__/
 baku_places_checkpoint.json*
-baku_amenities_places.csv
+baku_amenities_places*.csv

@@ -13,7 +13,10 @@ the same CORE_BOX the Overpass query used into overlapping search circles
 (radius >= spacing/sqrt(2) so square cells are fully covered) and query per
 (circle x type-group), deduping across overlaps by place id. Dense categories
 (restaurant/cafe/...) get a fine grid; sparse ones (cinema/casino/...) a
-coarse grid where the 20-cap doesn't bind.
+coarse grid where the 20-cap doesn't bind. Any tile that STILL saturates is
+refined reactively — split into a finer sub-grid and re-queried — until nothing
+truncates (see MAX_REFINE_DEPTH / make_children), so dense pockets like the Old
+City self-correct instead of being silently under-collected.
 
 Discipline carried over from the OSM pipeline:
   - Null, never guess: missing address -> None, never "" or a guess. Opening
@@ -23,9 +26,10 @@ Discipline carried over from the OSM pipeline:
     with reasons. Non-OPERATIONAL places are excluded but COUNTED — the
     closed counts are our staleness metric, we want to see them.
   - Failures fail loudly: a response missing the expected shape is a failure,
-    not an empty success. Progress checkpoints per tile-task to JSON so a
-    failed run resumes instead of restarting (same pattern as the Wikidata
-    enrichment checkpointing).
+    not an empty success. Progress checkpoints per tile-task to append-only
+    JSONL (one line per task) so a failed run resumes instead of restarting —
+    the same pattern as the Wikidata enrichment checkpoint, and for the same
+    reason: appending has no rewrite/lock window for a sync client to corrupt.
   - No price data: not requested in the field mask, not stored. Project
     decision: never claim affordability.
 
@@ -85,13 +89,23 @@ CORE_BOX = {"lat": (40.34, 40.44), "lon": (49.79, 49.90)}
 # see the saturation check in parse_places.
 MAX_RESULT_COUNT = 20
 
+# Adaptive refinement: rather than guess a grid fine enough for the densest
+# spots up front, we refine reactively — any tile that saturates is split into a
+# REFINE_SUBGRID x REFINE_SUBGRID grid at REFINE_FACTOR of its spacing/radius and
+# re-queried for the SAME type-group, repeating until nothing saturates or
+# MAX_REFINE_DEPTH is hit. Halving keeps radius >= spacing/sqrt(2) at every level
+# (600>=566, 300>=283, 150>=141, ...). Density is finite, so it converges.
+REFINE_SUBGRID = 2
+REFINE_FACTOR = 0.5
+MAX_REFINE_DEPTH = 3   # depth 0=800m, 1=400m, 2=200m, 3=100m spacing; stop here
+
 REQUEST_TIMEOUT = 30
 MAX_RETRIES = 4
 BACKOFF_BASE = 2          # seconds; wait grows BACKOFF_BASE * attempt
 POLITE_DELAY = 0.1        # seconds between requests
 CONFIRM_THRESHOLD = 500   # ask before running more requests than this
 
-CHECKPOINT_FILE = "baku_places_checkpoint.json"
+CHECKPOINT_FILE = "baku_places_checkpoint.jsonl"
 OUTPUT_CSV = "baku_amenities_places.csv"
 
 # --- Category taxonomy ------------------------------------------------------
@@ -181,18 +195,58 @@ def build_plan():
     tasks = []
     for tier, types in NEARBY_QUERIES:
         radius = GRIDS[tier]["radius_m"]
+        spacing = GRIDS[tier]["spacing_m"]
         for i, (lat, lng) in enumerate(grids[tier]):
             task_id = f"nearby|{tier}|{'+'.join(types)}|{i}"
             tasks.append({"id": task_id, "kind": "nearby", "types": types,
-                          "lat": lat, "lng": lng, "radius": radius})
+                          "lat": lat, "lng": lng, "radius": radius,
+                          "spacing": spacing, "depth": 0})
     for tier, query, category in TEXT_QUERIES:
         radius = GRIDS[tier]["radius_m"]
+        spacing = GRIDS[tier]["spacing_m"]
         for i, (lat, lng) in enumerate(grids[tier]):
             task_id = f"text|{tier}|{query}|{i}"
             tasks.append({"id": task_id, "kind": "text", "query": query,
                           "category": category, "lat": lat, "lng": lng,
-                          "radius": radius})
+                          "radius": radius, "spacing": spacing, "depth": 0})
     return tasks, grids
+
+
+def make_children(task):
+    """Split a saturated tile into a REFINE_SUBGRID x REFINE_SUBGRID grid at
+    REFINE_FACTOR of its spacing/radius, tiling the parent's cell. Children
+    inherit kind/types/query/category, so categorization is unchanged; only the
+    id, position, spacing, radius and depth differ. Deterministic: the same
+    parent always yields the same child ids, which is what makes resume safe."""
+    lat, lng = task["lat"], task["lng"]
+    child_spacing = task["spacing"] * REFINE_FACTOR
+    child_radius = task["radius"] * REFINE_FACTOR
+    # Child centers tile the parent cell: for a 2x2 split they sit at
+    # +/- (parent_spacing / 4) from the parent center on each axis.
+    span = task["spacing"] * (REFINE_SUBGRID - 1) / (2.0 * REFINE_SUBGRID)
+    dlat = span / 111320.0
+    dlon = span / (111320.0 * math.cos(math.radians(lat)))
+
+    lat0, lng0 = lat - dlat, lng - dlon
+    step_lat = (2 * dlat) / (REFINE_SUBGRID - 1) if REFINE_SUBGRID > 1 else 0
+    step_lon = (2 * dlon) / (REFINE_SUBGRID - 1) if REFINE_SUBGRID > 1 else 0
+
+    children = []
+    k = 0
+    for r in range(REFINE_SUBGRID):
+        for c in range(REFINE_SUBGRID):
+            child = dict(task)
+            child.update({
+                "id": f"{task['id']}~{k}",
+                "lat": round(lat0 + r * step_lat, 6),
+                "lng": round(lng0 + c * step_lon, 6),
+                "spacing": child_spacing,
+                "radius": child_radius,
+                "depth": task["depth"] + 1,
+            })
+            children.append(child)
+            k += 1
+    return children
 
 
 # --- HTTP layer -------------------------------------------------------------
@@ -288,43 +342,85 @@ def plan_fingerprint():
         "grids": GRIDS,
         "nearby": NEARBY_QUERIES,
         "text": TEXT_QUERIES,
+        "refine": [REFINE_SUBGRID, REFINE_FACTOR, MAX_REFINE_DEPTH],
     }, sort_keys=True, default=str)
     return hashlib.sha256(blob.encode("utf-8")).hexdigest()[:16]
 
 
 def load_checkpoint():
-    """Refuse to resume a checkpoint built under a different plan. Stale cached
-    responses carry the wrong field set, and stale task_ids no longer in the
-    plan would silently fall through parse_places' fallback to 'restaurant'."""
-    if not os.path.exists(CHECKPOINT_FILE):
-        return {"fingerprint": plan_fingerprint(), "tasks": {}}
+    """Append-only JSONL, matching the landmark enrichment checkpoint. Line 1 is
+    the plan fingerprint; every later line is either a task record
+    {"id","places"} or a refinement marker {"refined"}. Appending never rewrites
+    the file, so there is NO os.replace lock window for a sync client (Dropbox/
+    OneDrive) to collide with, and each write is constant-time no matter how big
+    the checkpoint has grown. (The old whole-file-JSON version rewrote the entire
+    accumulated file on every one of 800+ tasks — quadratic disk churn, and every
+    replace was a chance for a mid-scan sync client to corrupt it.)
 
+    Refuse to resume a checkpoint built under a different plan: stale cached
+    responses carry the wrong field set, and stale task_ids no longer in the plan
+    would silently fall through parse_places' fallback to 'restaurant'."""
+    if not os.path.exists(CHECKPOINT_FILE):
+        return {"fingerprint": plan_fingerprint(), "tasks": {}, "refined": []}
+
+    stored = None
+    tasks = {}
+    refined = []
     with open(CHECKPOINT_FILE, encoding="utf-8") as f:
-        ckpt = json.load(f)
+        for lineno, line in enumerate(f, 1):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rec = json.loads(line)
+            except ValueError:
+                # A torn final line from an interrupted append: tolerate it — the
+                # task just gets re-fetched. This is the whole point of append-
+                # only; a partial write costs one record, never the file.
+                print(f"  checkpoint line {lineno} is truncated — skipping "
+                      f"(that task will be re-fetched).")
+                continue
+            if "fingerprint" in rec:
+                stored = rec["fingerprint"]
+            elif "id" in rec:
+                tasks[rec["id"]] = rec["places"]   # last write wins on dup ids
+            elif "refined" in rec:
+                refined.append(rec["refined"])
 
     current = plan_fingerprint()
-    stored = ckpt.get("fingerprint")
     if stored != current:
         print(f"\nCheckpoint {CHECKPOINT_FILE} was written under a different "
               f"query plan (fingerprint {stored or 'ABSENT (pre-fingerprint file)'} "
               f"!= {current}).")
-        print("FIELD_MASK, GRIDS, NEARBY_QUERIES or TEXT_QUERIES changed since "
-              "it was written, so its cached responses have the wrong fields "
-              "and/or its task ids no longer match the plan. Resuming would "
-              "write silently wrong categories.")
+        print("FIELD_MASK, GRIDS, NEARBY_QUERIES, TEXT_QUERIES or the refine "
+              "policy changed since it was written, so its cached responses have "
+              "the wrong fields and/or its task ids no longer match the plan. "
+              "Resuming would write silently wrong categories.")
         print(f"Delete {CHECKPOINT_FILE} and re-run to start fresh. "
               "Not deleting it automatically — that is your call.")
         sys.exit(1)
 
-    ckpt.setdefault("tasks", {})
-    return ckpt
+    return {"fingerprint": current, "tasks": tasks, "refined": sorted(set(refined))}
 
 
-def save_checkpoint(ckpt):
-    tmp = CHECKPOINT_FILE + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(ckpt, f, ensure_ascii=False)
-    os.replace(tmp, CHECKPOINT_FILE)
+def _append_checkpoint(record):
+    with open(CHECKPOINT_FILE, "a", encoding="utf-8") as f:
+        f.write(json.dumps(record, ensure_ascii=False) + "\n")
+        f.flush()
+
+
+def init_checkpoint():
+    """Write the fingerprint header line once, when starting a fresh file."""
+    if not os.path.exists(CHECKPOINT_FILE):
+        _append_checkpoint({"fingerprint": plan_fingerprint()})
+
+
+def save_task(task_id, places):
+    _append_checkpoint({"id": task_id, "places": places})
+
+
+def save_refined(task_id):
+    _append_checkpoint({"refined": task_id})
 
 
 # --- Parsing / filtering ----------------------------------------------------
@@ -340,12 +436,15 @@ def _categorize(place, fallback):
     return fallback
 
 
-def parse_places(ckpt, tasks_by_id, verbose=True):
+def parse_places(ckpt, tasks_by_id, verbose=True, refined=None):
     """Dedupe by place id across overlapping circles, filter to OPERATIONAL,
     drop only rows missing id/name/coords (counted), keep NULLs elsewhere.
 
-    Returns (df, saturated_ids). A non-empty saturated_ids means the run is
-    INCOMPLETE — see the 20-result cap note on MAX_RESULT_COUNT."""
+    Returns (df, saturated_ids) where saturated_ids are RAW-truncated tiles.
+    A saturated tile that has since been refined (its id in `refined`) is no
+    longer a coverage gap — its sub-tiles cover the same area — so the INCOMPLETE
+    verdict is based on saturated MINUS refined. Only tiles that saturate and
+    cannot be refined (depth floor) are reported as truly incomplete."""
     seen = {}
     status_counts = {}
     drop_counts = {}
@@ -410,19 +509,24 @@ def parse_places(ckpt, tasks_by_id, verbose=True):
     df = pd.DataFrame(seen.values()).sort_values(["category", "name"]) if seen else pd.DataFrame()
 
     if verbose:
-        if saturated_ids:
+        refined_set = set(refined or ())
+        unresolved = [s for s in saturated_ids if s not in refined_set]
+        if unresolved:
             groups = {}
-            for tid in saturated_ids:
+            for tid in unresolved:
                 parts = tid.split("|")
                 groups["|".join(parts[1:3])] = groups.get("|".join(parts[1:3]), 0) + 1
             breakdown = ", ".join(f"{g}: {n}" for g, n in
                                   sorted(groups.items(), key=lambda kv: -kv[1]))
-            print(f"\nWARNING: {len(saturated_ids)} tiles hit the "
+            print(f"\nWARNING: {len(unresolved)} tiles hit the "
                   f"{MAX_RESULT_COUNT}-result cap ({breakdown}) — results "
                   f"truncated, these tiles need a finer grid.")
-            print(f"Saturated task ids: {', '.join(sorted(saturated_ids))}")
+            print(f"Saturated task ids: {', '.join(sorted(unresolved))}")
             print("RUN IS INCOMPLETE — places were missed. The counts below are "
                   "a LOWER BOUND, not a coverage report.")
+        elif saturated_ids and refined_set:
+            print(f"\nAll {len(saturated_ids)} tiles that hit the cap were split "
+                  f"by adaptive refinement — coverage converged, no truncation remains.")
 
         print(f"\nUnique places kept: {len(seen)}")
         print(f"businessStatus counts (staleness metric): {status_counts}")
@@ -456,7 +560,7 @@ def print_plan(tasks, grids):
     return len(tasks)
 
 
-def run(dry_run=False, sample=False, assume_yes=False):
+def run(dry_run=False, sample=False, sample_tile=None, assume_yes=False):
     tasks, grids = build_plan()
     total = print_plan(tasks, grids)
 
@@ -478,44 +582,122 @@ def run(dry_run=False, sample=False, assume_yes=False):
             print("Sample tile returned no places.")
         return
 
-    ckpt = load_checkpoint()
-    done = set(ckpt["tasks"])
-    remaining = [t for t in tasks if t["id"] not in done]
-    if done:
-        print(f"\nResuming: {len(done)} tasks already checkpointed, {len(remaining)} remaining.")
-
-    if len(remaining) > CONFIRM_THRESHOLD and not assume_yes:
-        answer = input(f"\n{len(remaining)} requests exceed the {CONFIRM_THRESHOLD} "
-                       f"threshold. Proceed? [y/N] ")
-        if answer.strip().lower() != "y":
-            print("Aborted.")
+    if sample_tile is not None:
+        # Probe ONE fine-grid restaurant tile to see if the 20-result cap binds
+        # there (dense areas like Icherisheher are where the grid may be too
+        # coarse). One real request. restaurant is the densest single type.
+        task_id = f"nearby|fine|restaurant|{sample_tile}"
+        task = next((t for t in tasks if t["id"] == task_id), None)
+        if task is None:
+            n_fine = len(grids["fine"])
+            print(f"\nNo such tile: {task_id}. Fine grid has {n_fine} tiles (0..{n_fine - 1}).")
             return
+        print(f"\n--sample-tile {sample_tile}: fetching {task_id} @ "
+              f"({task['lat']}, {task['lng']})")
+        places = fetch_task(task, key)
+        ckpt = {"fingerprint": plan_fingerprint(), "tasks": {task_id: places}}
+        df, saturated = parse_places(ckpt, {t["id"]: t for t in tasks})
+        print(f"\nRaw places returned by this tile: {len(places)} (cap = {MAX_RESULT_COUNT})")
+        if saturated:
+            print("=> CAP BINDS: this tile is saturated — results were truncated, "
+                  "the fine grid is too coarse for this area.")
+        else:
+            print("=> Cap does not bind: tile returned fewer than the cap, "
+                  "so coverage is complete here.")
+        return
 
-    for n, task in enumerate(remaining, 1):
-        try:
-            places = fetch_task(task, key)
-        except RuntimeError as e:
-            print(f"\nFATAL on {task['id']}: {e}")
-            print(f"Progress checkpointed to {CHECKPOINT_FILE}; re-run to resume.")
-            sys.exit(1)
-        ckpt["tasks"][task["id"]] = places
-        save_checkpoint(ckpt)
-        if n % 25 == 0 or n == len(remaining):
-            print(f"  {n}/{len(remaining)} tasks done ({len(done) + n} total)")
-        time.sleep(POLITE_DELAY)
+    ckpt = load_checkpoint()
+    tasks_by_id = {t["id"]: t for t in tasks}
+    refined = set(ckpt["refined"])
 
-    df, saturated = parse_places(ckpt, {t["id"]: t for t in tasks})
+    # Resume safety: refinement is deterministic, so regenerate the sub-tile tree
+    # of every already-refined parent. Without this, checkpointed child responses
+    # would have no entry in tasks_by_id and parse_places would silently fall back
+    # to category "restaurant" for them.
+    frontier = [t for t in tasks if t["id"] in refined]
+    while frontier:
+        nxt = []
+        for parent in frontier:
+            for child in make_children(parent):
+                tasks_by_id[child["id"]] = child
+                if child["id"] in refined:
+                    nxt.append(child)
+        frontier = nxt
+
+    if ckpt["tasks"]:
+        print(f"\nResuming: {len(ckpt['tasks'])} tasks already checkpointed, "
+              f"{len(refined)} already refined.")
+
+    def fetch_pending(batch, label):
+        pending = [t for t in batch if t["id"] not in ckpt["tasks"]]
+        if not pending:
+            return
+        if len(pending) > CONFIRM_THRESHOLD and not assume_yes:
+            answer = input(f"\n[{label}] {len(pending)} requests exceed the "
+                           f"{CONFIRM_THRESHOLD} threshold. Proceed? [y/N] ")
+            if answer.strip().lower() != "y":
+                print("Aborted.")
+                sys.exit(0)
+        for n, task in enumerate(pending, 1):
+            try:
+                places = fetch_task(task, key)
+            except RuntimeError as e:
+                print(f"\nFATAL on {task['id']}: {e}")
+                print(f"Progress checkpointed to {CHECKPOINT_FILE}; re-run to resume.")
+                sys.exit(1)
+            ckpt["tasks"][task["id"]] = places
+            save_task(task["id"], places)
+            if n % 25 == 0 or n == len(pending):
+                print(f"  [{label}] {n}/{len(pending)} tasks done")
+            time.sleep(POLITE_DELAY)
+
+    # Pass 0 is the static 812-request plan; every later pass re-queries only the
+    # tiles that saturated in the previous pass, at half the spacing.
+    init_checkpoint()
+    fetch_pending(tasks, "pass 0")
+    pass_num = 0
+    while True:
+        _, saturated = parse_places(ckpt, tasks_by_id, verbose=False)
+        to_refine = [s for s in saturated
+                     if s not in refined and tasks_by_id[s]["depth"] < MAX_REFINE_DEPTH]
+        if not to_refine:
+            break
+        pass_num += 1
+        new_children = []
+        for tid in to_refine:
+            new_children.extend(make_children(tasks_by_id[tid]))
+            refined.add(tid)
+            save_refined(tid)
+        for c in new_children:
+            tasks_by_id[c["id"]] = c
+        depth = new_children[0]["depth"]
+        print(f"\nPass {pass_num}: {len(to_refine)} saturated tiles -> "
+              f"{len(new_children)} sub-tiles at depth {depth} "
+              f"(~{int(round(new_children[0]['spacing']))}m spacing). Fetching...")
+        fetch_pending(new_children, f"pass {pass_num}")
+
+    df, saturated = parse_places(ckpt, tasks_by_id, refined=refined)
     df.to_csv(OUTPUT_CSV, index=False)
     print(f"\nWrote {len(df)} rows -> {OUTPUT_CSV}")
-    if saturated:
-        print(f"Reminder: {len(saturated)} tiles were saturated — "
-              f"{OUTPUT_CSV} is INCOMPLETE coverage, not a full census of the box.")
+    unresolved = [s for s in saturated if s not in refined]
+    if unresolved:
+        print(f"Reminder: {len(unresolved)} tiles STILL saturated at the depth "
+              f"floor (MAX_REFINE_DEPTH={MAX_REFINE_DEPTH}) — {OUTPUT_CSV} is "
+              f"INCOMPLETE for those hotspots. Lower REFINE_FACTOR or raise the "
+              f"depth cap if this fires.")
+    else:
+        print(f"Coverage converged after {pass_num} refinement pass(es): no tile "
+              f"remains saturated. {OUTPUT_CSV} is a full census of the box under "
+              f"the current type list.")
 
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="Discover Baku amenities via Google Places API (New).")
     ap.add_argument("--dry-run", action="store_true", help="print the request plan and stop")
     ap.add_argument("--sample", action="store_true", help="fetch one tile, print parsed rows, stop")
+    ap.add_argument("--sample-tile", type=int, metavar="N",
+                    help="fetch the fine restaurant tile at index N, report if the cap binds, stop")
     ap.add_argument("--yes", action="store_true", help="skip the request-count confirmation")
     args = ap.parse_args()
-    run(dry_run=args.dry_run, sample=args.sample, assume_yes=args.yes)
+    run(dry_run=args.dry_run, sample=args.sample, sample_tile=args.sample_tile,
+        assume_yes=args.yes)

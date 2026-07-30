@@ -42,9 +42,12 @@ Two acquisition pipelines produce CSVs; a serving layer loads them into Postgres
 - `get_amenities_places.py` — tiled `places:searchNearby` / `:searchText` discovery over the same
   `CORE_BOX`. Dual-resolution grid (fine 800m spacing / 600m radius for dense types; coarse
   2400m/1800m for sparse ones — radius >= spacing/sqrt2 so square cells are fully covered).
-  Per-task JSON checkpoint (`baku_places_checkpoint.json`) guarded by a **plan fingerprint**.
-  Writes `baku_amenities_places.csv`. Flags: `--dry-run`, `--sample`, `--yes`. Full run = 812
-  requests and real quota — never run it unprompted.
+  Any tile that still hits the 20-result cap is **refined reactively** — split into a finer
+  sub-grid and re-queried until nothing truncates (see saturation gotcha below). Append-only
+  JSONL checkpoint (`baku_places_checkpoint.jsonl`, one line per task) guarded by a **plan
+  fingerprint** on line 1. Writes `baku_amenities_places.csv`. Flags: `--dry-run`, `--sample`,
+  `--sample-tile N`, `--yes`. Full run = 812 requests (pass 0) plus adaptive refinement passes,
+  real quota — never run it unprompted.
 
 **Amenity acquisition (OSM) — SUPERSEDED, kept as baseline:**
 - `get_amenities.py` — Overpass discovery for cafes/restaurants/leisure POIs. Hardened HTTP layer.
@@ -152,10 +155,23 @@ losing it would destroy the only baseline for measuring OSM's miss rate.
 - **Tile grid, not one big radius** — Nearby Search hard-caps at 20 results with no pagination in
   the new API, so a large-radius query silently truncates. Coverage geometry: radius >=
   spacing/sqrt2 (600 >= 800/1.414, 1800 >= 2400/1.414), deduped by place id across overlaps.
+- **Adaptive refinement, not a hand-tuned dense grid** — a tile that still saturates is split into
+  a 2×2 sub-grid at half spacing/radius and re-queried for the same type-group, recursing until
+  nothing truncates or `MAX_REFINE_DEPTH` (800→400→200→100m). Halving preserves radius >=
+  spacing/sqrt2 at every level. Density is finite so it converges; the depth floor caps quota and
+  the run fails loudly if a hotspot is still saturated there. Dense pockets (Old City / Fountain
+  Square) self-correct instead of being silently under-collected — tile 40 over Icherisheher was
+  the confirmed saturating case.
+- **Append-only JSONL checkpoint, not whole-file JSON** (`baku_places_checkpoint.jsonl`): line 1 is
+  the plan fingerprint, every later line a task or `refined` record. Appending has no `os.replace`
+  lock window for a sync client (Dropbox/OneDrive) to corrupt, and writes are constant-time — the
+  old whole-file rewrite was quadratic (rewriting the whole growing file 800+ times) and its
+  `os.replace` was the actual failure that crashed a full run. A torn final line costs one record
+  (re-fetched), never the file. Same pattern as the landmark `enrichment_checkpoint.jsonl`.
 - **Checkpoint carries a plan fingerprint** (hash of FIELD_MASK + GRIDS + NEARBY_QUERIES +
-  TEXT_QUERIES). Change the plan and the loader *refuses to resume* rather than mixing responses
-  with the wrong field set, or letting a stale `task_id` fall through to the `restaurant` fallback
-  category. It never auto-deletes the checkpoint — that stays a human decision.
+  TEXT_QUERIES + refine policy). Change the plan and the loader *refuses to resume* rather than
+  mixing responses with the wrong field set, or letting a stale `task_id` fall through to the
+  `restaurant` fallback category. It never auto-deletes the checkpoint — that stays a human decision.
 
 **Serving (`postgresser.py` / `amenities_loading*.py` / `retrieval_of_top_l.py`):**
 - **Coordinates are longitude-first**: `ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)::geography`.
