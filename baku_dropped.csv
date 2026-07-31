@@ -2,10 +2,10 @@ Wikidata_ID,Name,Reason
 Q2620531,European route E002,"out_of_region (39.204,46.919)"
 Q1424921,Alexander Nevsky Church,"out_of_region (40.679,46.356)"
 Q25394152,Qarabağ mehmanxanası,sitelinks<4
-Q25385770,Four Seasons Hotel Baku,sitelinks<4
 Q19714214,Hilton Baku,sitelinks<4
-Q31299040,Hacı Qayıb məscidi,sitelinks<4
+Q25385770,Four Seasons Hotel Baku,sitelinks<4
 Q12838273,Cümə məscidi (Balaxanı),sitelinks<4
+Q31299040,Hacı Qayıb məscidi,sitelinks<4
 Q133030254,İmamkulu Mekteb-Masjid,sitelinks<4
 Q55706021,Sahibəz-Zaman məscidi,sitelinks<4
 Q55698657,Mashadi Garib Mosque,sitelinks<4
@@ -15,6 +15,7 @@ Q30894905,Cemetery in Hövsan,sitelinks<4
 Q111974946,Meylamov's house,sitelinks<4
 Q110104286,Haşımovun dörd mərtəbəli gəlir evi,sitelinks<4
 Q31291952,Building of Presidential Administration of Azerbaijan,sitelinks<4
+Q12836949,Agha Zeynal Bathhouse,sitelinks<4
 Q30897695,Castle street in Baku,sitelinks<4
 Q30895010,Mirza Mansur street,sitelinks<4
 Q30897697,Mirza Shafi Street,sitelinks<4
@@ -31,17 +32,16 @@ Q29951112,Telman Bagirov Street,sitelinks<4
 Q29933029,Aziz Aliyev Street,sitelinks<4
 Q135906277,Category:Building of the textile factory of Taghiyev,commons_category
 Q19799838,Sewer and water channels (Icheri Sheher),sitelinks<4
-Q12836949,Agha Zeynal Bathhouse,sitelinks<4
-Q97231657,Balaxani Gum bath,sitelinks<4
 Q20278670,Botanical Park in Baku,sitelinks<4
+Q97231657,Balaxani Gum bath,sitelinks<4
 Q22927295,House of Abbas Mirza Sharifzade,sitelinks<4
 Q20564250,Statue of Khurshidbanu Natavan,sitelinks<4
 Q18238697,Prokofi Caparidzenin heykəli,sitelinks<4
 Q111987812,Maqsud İbrahimbəyov yaradıcılıq mərkəzi,sitelinks<4
 Q119954175,Zəncirli ev,sitelinks<4
+Q5109003,Christ the Redeemer Parish,sitelinks<4
 Q18211130,The Petroglyph Museum,sitelinks<4
 Q19713860,Dövlət Bayrağı Muzeyi,sitelinks<4
-Q5109003,Christ the Redeemer Parish,sitelinks<4
 Q55702338,Palace of the Shirvanshahs,sitelinks<4
 Q25394135,Moskva mehmanxanası (Bakı),sitelinks<4
 Q130223577,Bunyadlilar mosque,sitelinks<4
@@ -51,45 +51,46 @@ Q65279747,Cami məscidi,sitelinks<4
 Q20570876,"""Möhsin Səlim"" məscidi",sitelinks<4
 Q130470781,Bagh mosque,sitelinks<4
 Q124285764,Böyük Xoralı sinaqoqu (Bakı),sitelinks<4
+Q55705317,House of the Melikov Brothers,sitelinks<4
 Q102369520,II Martyrs' Lane,sitelinks<4
 Q135108476,Kürdəxanı həbsxanası,sitelinks<4
 Q4140857,Gobustan prison,sitelinks<4
 Q16417516,Tagiyev's Passage,sitelinks<4
 Q135712619,Molokan Prayer House,sitelinks<4
-Q24034380,House of brothers of Mirzabekov,sitelinks<4
-Q55705317,House of the Melikov Brothers,sitelinks<4
 Q5508108,Full Moon Hotel,sitelinks<4
+Q24034380,House of brothers of Mirzabekov,sitelinks<4
 Q21980716,Sangachaly,sitelinks<4
 Q131803111,“From Waste to Art” Museum,sitelinks<4
 Q12848527,Çilov lighthouse,sitelinks<4
-Q30119660,Firdousy Street,sitelinks<4
-Q82048096,Fikret Amirov street,sitelinks<4
 Q55699983,Mariinsky Women's Gymnasium (Baku),sitelinks<4
 Q25542778,Avropa Oyunları Parkı,sitelinks<4
 Q23978564,Respublika Velotreki,sitelinks<4
+Q137798918,Vasmoy Bazaar,sitelinks<4
+Q126490544,Sharg Bazaar,sitelinks<4
+Q82048096,Fikret Amirov street,sitelinks<4
+Q30119660,Firdousy Street,sitelinks<4
 Q115206008,Japanese Garden in Baku,sitelinks<4
 Q12842839,Mərkəzi Gömrük Hospitalı,sitelinks<4
 Q108852627,İzmir Park,sitelinks<4
+Q135432264,Albanian Church (Buzovna),sitelinks<4
 Q20583916,Sabunçu train station,sitelinks<4
+Q139763604,Qara atlı baba piri,sitelinks<4
 Q97302239,Eldarzadənin türbəsi,sitelinks<4
 Q68903141,Sumahi tomb,sitelinks<4
 Q65279829,II Kesrani Tomb,sitelinks<4
 Q7461155,Shagan Olympic Sport Complex Stadium,sitelinks<4
-Q139763604,Qara atlı baba piri,sitelinks<4
-Q137798918,Vasmoy Bazaar,sitelinks<4
-Q126490544,Sharg Bazaar,sitelinks<4
-Q135432264,Albanian Church (Buzovna),sitelinks<4
 Q137303542,Yamin qalası,sitelinks<4
 Q135005845,Hacı Zeynal hamamı,sitelinks<4
 Q131010702,Təndir hamamı,sitelinks<4
 Q12842023,Mirvari (kafe),sitelinks<4
+Q130427628,Seyid Sədullanın xeyriyyə idarəsinin portalı,sitelinks<4
 Q139916477,Əlişir Nəvainin heykəli,sitelinks<4
 Q139153378,Monument to Niyazi,sitelinks<4
 Q61122254,Səməd Vurğunun heykəli,sitelinks<4
 Q18235461,Məşədi Əzizbəyovun heykəli,sitelinks<4
-Q137612190,House of Figarov brothers,sitelinks<4
-Q110317269,Moskva mitropoliti Müqəddəs Aleksis kilsəsi,sitelinks<4
-Q130327510,State District Power Plant named after L. Krasin,sitelinks<4
-Q139550676,Əliyev qardaşlarının evi,sitelinks<4
 Q137303424,Üç ovdan,sitelinks<4
 Q110101202,Əmiraslan ovdanı,sitelinks<4
+Q130327510,State District Power Plant named after L. Krasin,sitelinks<4
+Q137612190,House of Figarov brothers,sitelinks<4
+Q110317269,Moskva mitropoliti Müqəddəs Aleksis kilsəsi,sitelinks<4
+Q139550676,Əliyev qardaşlarının evi,sitelinks<4

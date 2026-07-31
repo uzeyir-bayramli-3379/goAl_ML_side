@@ -38,7 +38,7 @@ SLEEP_BETWEEN = 1.0       # seconds between WDQS batches — be polite, don't ha
 REQUEST_TIMEOUT = 90      # enrichment is heavier than discovery per row
 
 CHECKPOINT_FILE = "enrichment_checkpoint.jsonl"   # one JSON object per QID
-WIKI_CACHE_FILE = "wiki_extracts.jsonl"           # one JSON object per enwiki title
+WIKI_CACHE_FILE = "wiki_extracts_multilang.jsonl"  # one JSON object per {lang}:{title}
 CLEAN_CSV = "baku_landmarks_clean.csv"
 DROPPED_CSV = "baku_dropped.csv"
 
@@ -66,7 +66,8 @@ SINGLE_PROPS = {
 ENRICH_FIELDS = (
     [f for _, f in SINGLE_PROPS.values()]
     + [f for _, f in MULTI_PROPS.values()]
-    + ["image", "description", "enwiki_title", "enwiki_url"]
+    + ["image", "description",
+       "enwiki_title", "enwiki_url", "azwiki_title", "ruwiki_title"]
 )
 
 
@@ -78,7 +79,12 @@ def _build_enrich_query(qids):
     QID-valued props are labelled with an EXPLICIT rdfs:label join, NOT the
     wikibase:label auto-service: the auto-service silently fails to resolve
     labels referenced inside GROUP_CONCAT under GROUP BY (verified 2026-07-19 —
-    it returned empty for every architect/style/heritage value)."""
+    it returned empty for every architect/style/heritage value).
+
+    NOTE: the Sitelinks *count* is produced by discovery (data_getting.py), not
+    here. If that count includes non-Wikipedia sitelinks (Commons etc.), an entity
+    with an image gets a free +1 — it should be restricted to schema:isPartOf
+    ending in wikipedia.org. Not changed in this file."""
     values = " ".join(f"wd:{q}" for q in qids)
 
     single_selects = "\n  ".join(
@@ -106,6 +112,8 @@ SELECT ?item
   (SAMPLE(?description) AS ?description_out)
   (SAMPLE(?article) AS ?enwiki_url_out)
   (SAMPLE(?enwikiTitle) AS ?enwiki_title_out)
+  (SAMPLE(?azwikiTitle) AS ?azwiki_title_out)
+  (SAMPLE(?ruwikiTitle) AS ?ruwiki_title_out)
 WHERE {{
   VALUES ?item {{ {values} }}
   {single_optionals}
@@ -116,6 +124,19 @@ WHERE {{
     ?article schema:about ?item ;
              schema:isPartOf <https://en.wikipedia.org/> ;
              schema:name ?enwikiTitle .
+  }}
+  # az/ru only: fr/uk/ka/fa sitelinks exist on many entities but are downstream
+  # translations with near-zero marginal facts. These feed the wiki-extract
+  # fallback when the enwiki lead is thin or absent.
+  OPTIONAL {{
+    ?azArticle schema:about ?item ;
+               schema:isPartOf <https://az.wikipedia.org/> ;
+               schema:name ?azwikiTitle .
+  }}
+  OPTIONAL {{
+    ?ruArticle schema:about ?item ;
+               schema:isPartOf <https://ru.wikipedia.org/> ;
+               schema:name ?ruwikiTitle .
   }}
 }}
 GROUP BY ?item
@@ -160,6 +181,8 @@ def _parse_enrich_row(b):
     rec["description"] = _cell(b, "description_out")
     rec["enwiki_title"] = _cell(b, "enwiki_title_out")
     rec["enwiki_url"] = _cell(b, "enwiki_url_out")
+    rec["azwiki_title"] = _cell(b, "azwiki_title_out")
+    rec["ruwiki_title"] = _cell(b, "ruwiki_title_out")
     return rec
 
 
@@ -249,10 +272,40 @@ def merge(landmarks, enrichment):
 
 # --- Stage 3 (optional): Wikipedia intro extracts -------------------------
 
-WIKI_SUMMARY_URL = "https://en.wikipedia.org/api/rest_v1/page/summary/{title}"
+WIKI_PARAMS_BASE = {
+    "action": "query",
+    "format": "json",
+    "formatversion": 2,   # pages becomes a list, not a dict keyed by pageid
+    "prop": "extracts",
+    "exintro": 1,         # lead section only, not the whole article
+    "explaintext": 1,     # plain text, not HTML
+    "redirects": 1,       # REST followed these silently; Action API does not
+}
+
+# The imported `headers` is the Wikidata/SPARQL one (Accept: sparql-results+json),
+# wrong for the Wikipedia REST API. Wikimedia asks for a descriptive User-Agent
+# with contact info and can throttle/block generic or absent UAs.
+WIKI_HEADERS = {
+    "User-Agent": ("GoAI/1.0 landmark-grounding "
+                   "(https://github.com/uzeyir-bayramli-3379; uzeyir00b3379@gmail.com)"),
+    "Accept": "application/json",
+}
+
+WIKI_MAX_RETRIES = 4      # same retry budget as get_amenities_places.py::_post
+WIKI_BACKOFF_BASE = 2     # seconds; wait grows WIKI_BACKOFF_BASE * attempt
+
+# Distinct from None: None means "genuinely no article" (cacheable); this means
+# "transient failure after retries" and must NEVER be written to the cache, so a
+# later run retries instead of remembering a dropped connection as permanent absence.
+_FETCH_FAILED = object()
 
 
 def _load_wiki_cache(path=WIKI_CACHE_FILE):
+    """Return {f"{lang}:{title}": extract}. Keyed on lang:title, NOT bare title:
+    three language wikis share this dict and can hold the same title, so a bare
+    key would collide and serve the wrong-language article as a silent wrong
+    answer. New filename on purpose — the old en-only cache keyed on bare titles
+    would otherwise mask every en title as a stale hit."""
     cache = {}
     if os.path.exists(path):
         with open(path, encoding="utf-8") as fh:
@@ -260,62 +313,186 @@ def _load_wiki_cache(path=WIKI_CACHE_FILE):
                 line = line.strip()
                 if line:
                     rec = json.loads(line)
-                    cache[rec["title"]] = rec["extract"]
+                    cache[f"{rec['lang']}:{rec['title']}"] = rec["extract"]
     return cache
 
 
-def _fetch_wiki_extract(title):
-    """Intro extract for one enwiki article, or None on 404/failure."""
-    url = WIKI_SUMMARY_URL.format(title=urllib.parse.quote(title.replace(" ", "_")))
-    try:
-        r = requests.get(url, headers=headers, timeout=30)
-    except requests.exceptions.RequestException:
-        return None
-    if r.status_code == 404:
-        return None
-    if r.status_code == 429:
-        wait = int(r.headers.get("Retry-After", 5))
-        print(f"  wiki 429 on '{title}', sleeping {wait}s")
-        time.sleep(wait)
-        return _fetch_wiki_extract(title)
-    if not r.ok:
-        return None
-    return r.json().get("extract") or None
+def _fetch_wiki_extract(title, lang="en"):
+    """Intro extract (full lead section) for one article on the {lang} wikipedia.
+    The Action API contract is identical across language wikis. Returns:
+      - str            : the extract text
+      - None           : article genuinely absent / invalid title / empty lead
+                         — safe to cache as permanent absence
+      - _FETCH_FAILED  : transient failure after retries — caller must NOT cache.
 
+    NOTE: unlike the REST summary endpoint, api.php returns HTTP 200 for a
+    missing article. Absence is signalled INSIDE the body, not by status code."""
+    api_url = f"https://{lang}.wikipedia.org/w/api.php"
+    params = dict(WIKI_PARAMS_BASE, titles=title)
+    for attempt in range(1, WIKI_MAX_RETRIES + 1):
+        try:
+            r = requests.get(api_url, params=params,
+                             headers=WIKI_HEADERS, timeout=30)
+        except requests.exceptions.RequestException as e:
+            print(f"  wiki network error on '{title}' "
+                  f"(attempt {attempt}/{WIKI_MAX_RETRIES}): {e}")
+            time.sleep(WIKI_BACKOFF_BASE * attempt)
+            continue
+
+        # No 404 branch any more. If api.php itself 404s, the URL is wrong —
+        # that must fail loudly as _FETCH_FAILED, never cache as absence.
+        if r.status_code == 429:
+            wait = int(r.headers.get("Retry-After") or WIKI_BACKOFF_BASE * attempt)
+            print(f"  wiki 429 on '{title}', sleeping {wait}s "
+                  f"(attempt {attempt}/{WIKI_MAX_RETRIES})")
+            time.sleep(wait)
+            continue
+        if r.status_code >= 500:
+            wait = WIKI_BACKOFF_BASE * attempt
+            print(f"  wiki {r.status_code} on '{title}'; backing off {wait}s "
+                  f"(attempt {attempt}/{WIKI_MAX_RETRIES})")
+            time.sleep(wait)
+            continue
+        if not r.ok:
+            print(f"  wiki HTTP {r.status_code} on '{title}' "
+                  f"(attempt {attempt}/{WIKI_MAX_RETRIES})")
+            time.sleep(WIKI_BACKOFF_BASE * attempt)
+            continue
+
+        try:
+            data = r.json()
+        except ValueError:
+            print(f"  wiki non-JSON body on '{title}' "
+                  f"(attempt {attempt}/{WIKI_MAX_RETRIES})")
+            time.sleep(WIKI_BACKOFF_BASE * attempt)
+            continue
+
+        # API-level error (bad params, malformed title). Permanent for this title.
+        if "error" in data:
+            print(f"  wiki API error on '{title}': "
+                  f"{data['error'].get('code')} — {data['error'].get('info')}")
+            return None
+
+        pages = data.get("query", {}).get("pages")
+        if not pages:
+            # Unexpected shape, not a stated absence — treat as transient.
+            print(f"  wiki unexpected response shape on '{title}' "
+                  f"(attempt {attempt}/{WIKI_MAX_RETRIES})")
+            time.sleep(WIKI_BACKOFF_BASE * attempt)
+            continue
+
+        page = pages[0]
+        if page.get("missing") or page.get("invalid"):
+            return None  # genuinely no article — correct to remember
+        extract = page.get("extract") or None
+
+        # Small wikis consolidate: a sitelink can resolve to a collective/parent
+        # article (ten mosques -> one page with ten sections). The extract is then
+        # grounded text about the WRONG building, which the grounding contract
+        # can't catch. Print-and-continue — never auto-reject, the extract may
+        # still be usable and this is a human signal.
+        returned = page.get("title", "")
+        if returned != title:
+            print(f"  TITLE MISMATCH [{lang}]: asked '{title}', got '{returned}'")
+
+        # No-redirect variant of the same problem: sitelink points straight at the
+        # parent, no redirect logged. If neither the full title nor its first
+        # significant word appears in the lead, warn.
+        if extract:
+            words = [w for w in title.split() if len(w) > 2] or title.split()
+            head = extract[:200].lower()
+            if title.lower() not in head and (not words or words[0].lower() not in head):
+                print(f"  NAME NOT IN EXTRACT [{lang}]: '{title}' absent from lead")
+
+        return extract
+
+    return _FETCH_FAILED
 
 def add_wiki_extracts(clean_df, verbose=True):
-    """Add a `wiki_extract` column. Only fetched for rows where core_zone is True
-    OR sitelinks >= 10 (Wikidata is thin on descriptive prose; this fills the gap
-    for the landmarks users actually stand in front of). Cached + resumable."""
+    """Add `wiki_extract` + `wiki_extract_lang` columns.
+
+    Wikidata is thin on descriptive prose; the Wikipedia lead fills the gap so
+    generation has real text to ground on. Content often lives in az/ru rather
+    than en, so this falls back across the three sitelinks:
+
+        en = fetch(enwiki) if present
+        if en and len(en) >= 400:  use en   (400 is just below the en median —
+                                             healthy rows are never touched)
+        else: pick the LONGEST of {en, az, ru}
+
+    LONGEST WINS — never concatenate: language editions disagree on dates and
+    attributions, so two sources means the model silently picks one and you can't
+    tell which. One source per landmark. `wiki_extract_lang` records the winner,
+    required for the CC BY-SA attribution line ("from Wikipedia" is insufficient;
+    the specific edition must be named).
+
+    Cached + resumable, keyed on {lang}:{title}. Only genuine 404/empty results
+    are cached; transient failures (_FETCH_FAILED) are left uncached so a re-run
+    retries them — a failed az fetch is NOT recorded as 'az has no article.'"""
     cache = _load_wiki_cache()
-    extracts = []
-    fetched = 0
+    failed = []
 
-    for _, row in clean_df.iterrows():
-        title = row.get("enwiki_title")
-        eligible = bool(row.get("core_zone")) or row.get("Sitelinks", 0) >= 10
-        if not (eligible and title):
-            extracts.append(None)
-            continue
-
-        if title in cache:
-            extracts.append(cache[title])
-            continue
-
-        extract = _fetch_wiki_extract(title)
-        cache[title] = extract
+    def fetch(title, lang):
+        """Cache-aside single-article fetch. None on absence/blank/transient
+        failure; transient failures are logged in `failed` and never cached."""
+        if not isinstance(title, str) or not title.strip():
+            return None
+        title = title.strip()
+        key = f"{lang}:{title}"
+        if key in cache:
+            return cache[key]
+        extract = _fetch_wiki_extract(title, lang)
+        if extract is _FETCH_FAILED:
+            failed.append(key)
+            return None  # not cached — next run retries
+        cache[key] = extract
         with open(WIKI_CACHE_FILE, "a", encoding="utf-8") as fh:
-            fh.write(json.dumps({"title": title, "extract": extract},
+            fh.write(json.dumps({"lang": lang, "title": title, "extract": extract},
                                 ensure_ascii=False) + "\n")
-        extracts.append(extract)
-        fetched += 1
-        time.sleep(0.5)  # polite pacing on the public REST API
+        time.sleep(0.5)  # polite pacing, only on a real network fetch
+        return extract
+
+    extracts = []
+    langs = []
+    for _, row in clean_df.iterrows():
+        en = fetch(row.get("enwiki_title"), "en")
+        if en and len(en) >= 400:
+            extracts.append(en)
+            langs.append("en")
+            continue
+
+        candidates = [
+            ("en", en),
+            ("az", fetch(row.get("azwiki_title"), "az")),
+            ("ru", fetch(row.get("ruwiki_title"), "ru")),
+        ]
+        best_lang, best = None, None
+        for lang, cand in candidates:
+            if cand and (best is None or len(cand) > len(best)):
+                best_lang, best = lang, cand
+        extracts.append(best)
+        langs.append(best_lang)
 
     clean_df = clean_df.copy()
     clean_df["wiki_extract"] = extracts
+    clean_df["wiki_extract_lang"] = langs
     if verbose:
         got = sum(1 for e in extracts if e)
-        print(f"Wiki extracts: {got} present ({fetched} freshly fetched).")
+        none_count = sum(1 for e in extracts if not e)
+        by_lang = {}
+        for l in langs:
+            if l:
+                by_lang[l] = by_lang.get(l, 0) + 1
+        print(f"Wiki extracts: {got} present.")
+        for l in ("en", "az", "ru"):
+            print(f"  {l}: {by_lang.get(l, 0)} row(s) won by this edition")
+        print(f"  no extract in any of en/az/ru: {none_count}")
+        if failed:
+            print(f"  WARNING: {len(failed)} fetch(es) failed after retries and were "
+                  f"NOT cached (transient errors):")
+            for k in failed:
+                print(f"    - {k}")
+            print("  Run is INCOMPLETE — re-run with --wiki to retry these.")
     return clean_df
 
 
