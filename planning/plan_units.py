@@ -29,8 +29,9 @@ from planning_prompt_v1 import PLANNING_SYSTEM_PROMPT
 
 INPUT_CSV = "rows_11_testing.csv"
 DEFAULT_OUT = "visit_units.json"
-ANCHOR = (49.8355, 40.3663)          # (lon, lat) — anchor the meters_away is from
+ANCHOR = (49.845397, 40.374701)          # (lon, lat) — anchor the meters_away is from
 MODEL = "gemini-2.5-flash"
+MIN_ANCHOR_N = 5
 MAX_OUTPUT_TOKENS = 16000            # cap guards a runaway; raise if a big input truncates.
 # gemini-2.5-flash thinks by default, and thinking tokens are billed against
 # max_output_tokens — unbounded thinking ate the budget and truncated the JSON
@@ -39,7 +40,10 @@ MAX_OUTPUT_TOKENS = 16000            # cap guards a runaway; raise if a big inpu
 # keeps some reasoning for the quota-based ranking. -1 = unbounded (the old bug).
 THINKING_BUDGET = 4096
 
-INPUT_COLS = ["wikidata_id", "name", "primary_class", "sitelinks", "meters_away"]
+INPUT_COLS = ["wikidata_id", "name", "primary_class", "sitelinks",
+              "meters_away", "wiki_extract"]
+
+EXTRACT_CHARS = 400
 
 
 def select_rows(df, limit=None, thinnest=None, fattest=None, ids=None):
@@ -65,12 +69,29 @@ def select_rows(df, limit=None, thinnest=None, fattest=None, ids=None):
     return df
 
 
-def build_user_message(df):
-    """The entities as a compact JSON records block plus the anchor. Facts go in
-    the USER message, never the system prompt (which holds literal braces)."""
+def compute_quotas(n):
+    """Scale the primary/secondary tier quotas to the input size instead of
+    hardcoding them. Returns (primary, secondary), or None when n < 5 — such a
+    cluster is not a full anchor day but a solo stop attached to another
+    anchor's day, so it should be skipped rather than tiered."""
+    if n < MIN_ANCHOR_N:
+        return None
+    primary = min(6, max(2, n // 8))
+    secondary = min(12, max(3, n // 4))
+    return primary, secondary
+
+
+def build_user_message(df, primary, secondary):
+    """The entities as a compact JSON records block plus the anchor and the
+    per-run tier quotas. Facts go in the USER message, never the system prompt
+    (which holds literal braces)."""
     records = df[INPUT_COLS].to_dict(orient="records")
+    for r in records:
+        e = r.get("wiki_extract")
+        r["wiki_extract"] = (e[:EXTRACT_CHARS] if isinstance(e, str) else None)
     return (
         f"ANCHOR (lon, lat): {ANCHOR[0]}, {ANCHOR[1]}\n"
+        f"QUOTAS: primary = {primary}, secondary = {secondary}\n"
         f"ENTITIES ({len(records)}):\n"
         f"{json.dumps(records, ensure_ascii=False, indent=0)}"
     )
@@ -107,16 +128,130 @@ def _validate(units, input_ids):
         problems.append(f"ids assigned to more than one unit: {sorted(dupes)}")
     return problems
 
+def _as_bool(s):
+    """CSV booleans arrive as strings and bool('false') is True, so a naive
+    astype(bool) passes every row and the blocklist silently stops working."""
+    if s.dtype == bool:
+        return s
+    return (s.astype(str).str.strip().str.lower()
+             .isin(["true", "t", "1", "yes"]))
+
+
+def split_eligible(df):
+    """Rows the blocklist already ruled out never reach the model: a metro
+    station cannot be a stop, so asking the model to rank it is asking a
+    question with one correct answer we already know. They come back as
+    ambient afterwards, which keeps the output a complete partition of the
+    input and keeps the id validator meaningful."""
+    if "stop_eligible" not in df.columns:
+        raise SystemExit("Input CSV missing stop_eligible — re-export with it.")
+    flag = _as_bool(df["stop_eligible"])
+    eligible = df[flag]
+    blocked = df[~flag]
+    if len(blocked):
+        print(f"  blocklist: {len(blocked)} row(s) forced ambient, not sent to the model")
+        for n in blocked["name"]:
+            print(f"    - {n}")
+    return eligible, blocked
+
+
+def blocked_units(blocked):
+    return [
+        {"unit_name": r["name"], "wikidata_ids": [r["wikidata_id"]],
+         "tier": "ambient", "duration_minutes": None}
+        for _, r in blocked.iterrows()
+    ]
+
+
+SATURATION_THRESHOLD = 0.15   # share of an anchor's rows
+MAX_PER_CATEGORY = 4          # across primary + secondary combined
+MAX_LONG_UNITS = 1            # 180-minute units per anchor
+
+# Wikidata's coarse top-level buckets. Frequent everywhere by construction —
+# Baku Olympic Stadium and a caravanserai are both 'architectural structure' —
+# so frequency here means "the taxonomy gave up", not "these are alike".
+CATCH_ALL_CLASSES = {"building", "architectural structure", "monument", "structure"}
+
+
+def saturating_classes(df):
+    """Classes to cap, derived from THIS anchor's composition rather than a
+    hardcoded list. Baku saturates on mosques, Rome on churches, Kyoto on
+    temples — a whitelist tuned to one city silently fails in the others.
+    A class qualifies when it is both frequent and specific."""
+    counts = df["primary_class"].value_counts(normalize=True)
+    out = {c for c, share in counts.items()
+           if share >= SATURATION_THRESHOLD and c not in CATCH_ALL_CLASSES}
+    if out:
+        print(f"  saturating classes: "
+              f"{', '.join(f'{c} ({counts[c]:.0%})' for c in sorted(out))}")
+    return out
+
+
+def enforce(units, df):
+    """Rules the prompt states and the model does not reliably follow. Applied
+    here rather than argued harder in the prompt: quotas it now respects,
+    these it does not.
+
+    Order matters — demotions push units into ambient, and ambient must end up
+    with a null duration, so that rule runs last."""
+    cls = dict(zip(df["wikidata_id"], df["primary_class"]))
+
+    def unit_class(u):
+        for qid in u.get("wikidata_ids", []):
+            if qid in cls:
+                return cls[qid]      # first id wins; merged units are one stop
+        return None
+
+    scheduled = [u for u in units if u["tier"] in ("primary", "secondary")]
+
+    # Category cap, applied only to classes that saturate THIS anchor. The fifth
+    # mosque in a radius is not worth the first, and Icherisheher returns 15
+    # mosque units — without this the Old City reports a week of content. Demoted
+    # slots are NOT backfilled: slightly under quota is fine, reordering the
+    # ranking here is not.
+    capped = saturating_classes(df)
+    seen = {}
+    for u in scheduled:
+        c = unit_class(u)
+        if c not in capped:
+            continue
+        seen[c] = seen.get(c, 0) + 1
+        if seen[c] > MAX_PER_CATEGORY:
+            print(f"  cap: {u['unit_name']} -> ambient ({c} #{seen[c]})")
+            u["tier"] = "ambient"
+
+    # One 180 per anchor. The model reaches for 180 whenever a unit feels
+    # important; three of them turns a half-day district into two days.
+    longs = [u for u in units
+         if u.get("duration_minutes") == 180 and u["tier"] in ("primary", "secondary")]
+    for u in longs[MAX_LONG_UNITS:]:
+        print(f"  180-cap: {u['unit_name']} -> 90")
+        u["duration_minutes"] = 90
+
+    for u in units:
+        if u["tier"] in ("ambient", "anchor_self"):
+            u["duration_minutes"] = None
+
+    return units
 
 def run(df, out_path, dry_run=False):
-    user_msg = build_user_message(df)
+    eligible, blocked = split_eligible(df)
+    n = len(eligible)
+    quotas = compute_quotas(n)
+    if quotas is None:
+        print(f"{n} eligible entit(y/ies) (< {MIN_ANCHOR_N}): not an anchor — "
+              f"solo stop to attach to another anchor's day. Skipping.")
+        return
+    primary, secondary = quotas
+    user_msg = build_user_message(eligible, primary, secondary)
     if dry_run:
         print("=" * 70)
         print("SYSTEM:\n" + PLANNING_SYSTEM_PROMPT)
         print("=" * 70)
         print("USER:\n" + user_msg)
         print("=" * 70)
-        print(f"Dry run: {len(df)} entit(y/ies), no API call made.")
+        print(f"Dry run: {len(eligible)} entit(y/ies), quotas primary={primary} "
+              f"secondary={secondary}, no API call made.")
         return
 
     load_dotenv()
@@ -155,11 +290,13 @@ def run(df, out_path, dry_run=False):
             f"THINKING_BUDGET or raise MAX_OUTPUT_TOKENS.")
 
     try:
-        units = json.loads(_strip_fences(raw))
+        units = json.loads(_strip_fences(raw)) + blocked_units(blocked)
     except (ValueError, TypeError) as e:
         raise SystemExit(f"Unparseable model response: {e}\n---\n{raw[:2000]}")
     if not isinstance(units, list):
         raise SystemExit(f"Expected a JSON array, got {type(units).__name__}.")
+
+    units = enforce(units, df)
 
     input_ids = set(df["wikidata_id"])
     problems = _validate(units, input_ids)

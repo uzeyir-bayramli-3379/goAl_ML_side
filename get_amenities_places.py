@@ -130,14 +130,13 @@ CATEGORY_MAP = {
     "gym":                   "gym",
     "sports_complex":        "sports_centre",
     "park":                  "park",
-    "shopping_mall": "shopping_mall",
 }
 
 # When a place carries several mapped types (a pub is often also typed
 # restaurant), the most specific wins — restaurant is the catch-all, so last.
 TYPE_PRIORITY = [
     "night_club", "casino", "movie_theater", "amusement_park", "water_park",
-    "bowling_alley", "amusement_center","shopping_mall", "food_court", "bakery", "cafe",
+    "bowling_alley", "amusement_center", "food_court", "bakery", "cafe",
     "fast_food_restaurant", "pub", "bar", "gym", "sports_complex", "park",
     "restaurant",
 ]
@@ -155,16 +154,13 @@ NEARBY_QUERIES = [
     ("coarse", ["night_club", "casino", "movie_theater"]),
     ("coarse", ["amusement_park", "bowling_alley", "water_park"]),
     ("coarse", ["food_court", "amusement_center"]),
-    ("coarse", ["shopping_mall"]),   
-    ("coarse", ["market", "supermarket"]),   # Green Market, Yaşıl Bazar
-    ("coarse", ["tourist_attraction"]),
 ]
 
 # No clean Places type exists for these -> searchText scoped to the tile.
 # (query, our category)
 TEXT_QUERIES = [
     ("coarse", "hookah lounge", "hookah"),
-    ("coarse", "dance hall", "dance_venue"),   
+    ("coarse", "dance hall", "dance_venue"),
 ]
 
 # radius >= spacing / sqrt(2) guarantees full coverage of the square cells.

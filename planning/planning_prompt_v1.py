@@ -11,7 +11,8 @@ PLANNING_SYSTEM_PROMPT = """You are grouping map data into visitable stops for a
 
 INPUT: landmark entities within a walkable radius of an anchor point.
 Each has: wikidata_id, name, primary_class, sitelinks (Wikipedia language
-count).
+count), meters_away (metres from the anchor point), and wiki_extract (the
+opening of its Wikipedia article, truncated; may be null).
 
 TASK: collapse these entities into VISIT UNITS — one unit per thing a
 visitor actually stops at. Multiple entities frequently describe one stop.
@@ -29,10 +30,10 @@ GROUPING RULES
 TIERING — this is a RANKING task with fixed quotas, not a classification.
 
 Rank all units by how much a first-time visitor with one day here would
-regret missing them. Then assign strictly by quota:
+regret missing them. Then assign strictly by the QUOTAS given in the input:
 
-  primary    — the top 5 units. No more, no fewer.
-  secondary  — the next 10 units. No more.
+  primary    — the top units, exactly the primary quota. No more, no fewer.
+  secondary  — the next units, up to the secondary quota. No more.
   ambient    — every remaining unit, without exception.
 
 The quotas are hard. A unit can be genuinely interesting and still be
@@ -43,7 +44,15 @@ cut for a one-day visit. Do not stretch the quotas to be generous.
 
 Use sitelinks as your primary ranking signal. Prefer it over your own
 familiarity with this city — the ranking must be reproducible from the
-input alone.
+input alone. Use wiki_extract only to break ties between units with
+similar sitelinks, never to override the sitelinks order outright.
+
+Use wiki_extract to judge DURATION and CURRENT USE. A building's
+primary_class often records what it was built as, not what it is now — a
+former school may house a research institute, a palace may house a museum.
+Estimate the time a visitor spends on what is there today. If the extract
+indicates the building is not open to visitors, tier it ambient with a null
+duration regardless of its rank.
 
 When several units share a category, at most two may appear across primary
 and secondary combined. The rest are ambient regardless of individual merit.

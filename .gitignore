@@ -5,3 +5,4 @@ __pycache__/
 baku_places_checkpoint.json*
 baku_amenities_places*.csv
 landmark_overviews
+baku_places_*checkpoint.json*
