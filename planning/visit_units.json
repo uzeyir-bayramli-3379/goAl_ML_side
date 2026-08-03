@@ -1,0 +1,266 @@
+[
+  {
+    "unit_name": "Azerbaijan State Academic Opera and Ballet Theater",
+    "wikidata_ids": [
+      "Q48623"
+    ],
+    "tier": "primary",
+    "duration_minutes": 180
+  },
+  {
+    "unit_name": "Azerbaijan Railway Museum",
+    "wikidata_ids": [
+      "Q123753947"
+    ],
+    "tier": "primary",
+    "duration_minutes": 90
+  },
+  {
+    "unit_name": "Sahil",
+    "wikidata_ids": [
+      "Q3025366"
+    ],
+    "tier": "secondary",
+    "duration_minutes": 45
+  },
+  {
+    "unit_name": "Azerbaijan State Museum of Musical Culture",
+    "wikidata_ids": [
+      "Q4058262"
+    ],
+    "tier": "secondary",
+    "duration_minutes": 45
+  },
+  {
+    "unit_name": "Nizami Street",
+    "wikidata_ids": [
+      "Q4473340"
+    ],
+    "tier": "secondary",
+    "duration_minutes": 20
+  },
+  {
+    "unit_name": "Government House",
+    "wikidata_ids": [
+      "Q2347389"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "28 May",
+    "wikidata_ids": [
+      "Q3025367"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Azerbaijan State Theatre of Young Spectators",
+    "wikidata_ids": [
+      "Q2671722"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Cəfər Cabbarlı",
+    "wikidata_ids": [
+      "Q3025580"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Rashid Behbudov State Song Theatre",
+    "wikidata_ids": [
+      "Q7294887"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Church of the Saviour",
+    "wikidata_ids": [
+      "Q2029345"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Azerbaijan State Theatre Museum",
+    "wikidata_ids": [
+      "Q16416482"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Azerbaijan State Museum of History of Religion",
+    "wikidata_ids": [
+      "Q12836431"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Heydar Aliyev Palace",
+    "wikidata_ids": [
+      "Q2078074"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "House-Museum of Bulbul (Baku)",
+    "wikidata_ids": [
+      "Q37926509"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "The Museum Centre",
+    "wikidata_ids": [
+      "Q14942756"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Synagogue of the Ashkenazi Jews in Baku",
+    "wikidata_ids": [
+      "Q196266"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "House-Museum of Mammed Said Ordubadi",
+    "wikidata_ids": [
+      "Q16371075"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "House-Museum of Niyazi",
+    "wikidata_ids": [
+      "Q38993391"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Monument to Rashid Behbudov",
+    "wikidata_ids": [
+      "Q30879151"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Ashurbeyov House",
+    "wikidata_ids": [
+      "Q97222068"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Park Bulvar",
+    "wikidata_ids": [
+      "Q187512"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Heydər Əliyevin heykəli",
+    "wikidata_ids": [
+      "Q16368673"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Church of the Blessed Virgin Mary's Immaculate Conception",
+    "wikidata_ids": [
+      "Q24692130"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "House with Griffins",
+    "wikidata_ids": [
+      "Q21946191"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Parachute tower in Baku",
+    "wikidata_ids": [
+      "Q4345043"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Monument to Bulbul",
+    "wikidata_ids": [
+      "Q25541964"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "The building of the Union of Composers of Azerbaijan",
+    "wikidata_ids": [
+      "Q105539450"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Skobelev Brothers' Mill",
+    "wikidata_ids": [
+      "Q111972869"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "The building of Buzovnaneft",
+    "wikidata_ids": [
+      "Q21662011"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Mikado Cinematography building",
+    "wikidata_ids": [
+      "Q105451415"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Four-storey tenement house of Musa Nagiyev",
+    "wikidata_ids": [
+      "Q110101221"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Building of Hospital № 4 in Baku",
+    "wikidata_ids": [
+      "Q99472102"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  }
+]

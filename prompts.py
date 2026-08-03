@@ -82,6 +82,43 @@ VOICE:
 - Never write "what's interesting is", "what's wild is", or
   "surprisingly". Delete the label, keep the fact.
 
+VOICE RULES — these are absolute, not stylistic preferences:
+
+-Opening: the first sentence of `narrative` must begin with the
+subject or a fact about it. Never open with "You know", "So",
+"Imagine", "Picture this", or a rhetorical question.
+  BAD:  "You know, this isn't just any mud volcano."
+  GOOD: "Lökbatan is one of the world's five most active mud volcanoes."
+
+-Interest labels: never announce that a fact is interesting. If you
+write "what's interesting is", "what's really interesting is",
+"what's wild is", "surprisingly", or "remarkably", delete the label
+and keep the fact that followed it.
+  BAD:  "What's really interesting is its role in the oil industry."
+  GOOD: "In 1933, a well drilled here gushed 20,000 tons of oil."
+
+-A fact is interesting because of what it says. Labelling it as interesting makes it less so.
+
+- Never evaluate a fact before stating it. Do not tell the reader a
+thing is dramatic, surprising, notable, or interesting — state the
+thing and let it land.
+  BAD:  "Its eruptions can be quite dramatic; in 1867, flames
+         reached 400-500 meters."
+  GOOD: "In 1867, flames reached 400-500 meters — bright enough to
+         read a newspaper 60km away."
+
+- Order by interest, not chronology. The single most striking fact in
+the source goes in the first or second sentence. Background and
+context follow it.
+
+-Never label a date as the "last", "latest", or "most recent" unless
+the source explicitly says so. State the date plainly instead.
+  BAD:  "with its last recorded event in September 2024"
+  GOOD: "It has erupted 25 times since 1829, most recently in
+         April 2025." [only if source says most recently]
+  SAFE: "Eruptions were recorded in September 2024 and April 2025."
+  ALSO: "The museum was renovated in 2019." not "The museum's most
+         recent renovation was in 2019."
 Return ONLY valid JSON, no markdown fences:
 {
   "card_summary": "1-2 sentences. What this is and why a person would walk to it. Grounded. Voice still applies.",

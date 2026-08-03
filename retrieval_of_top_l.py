@@ -38,6 +38,7 @@ def retrieve_landmarks(question, user_lat, user_lng, radius_m=2000, k=5):
                embedding <=> %s::vector AS vec_dist
         FROM landmarks
         WHERE ST_DWithin(geom, ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography, %s)
+          AND existence_status IS DISTINCT FROM 'gone'
         ORDER BY (
             %s * (embedding <=> %s::vector) +
             %s * (ST_Distance(geom, ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography) / %s)

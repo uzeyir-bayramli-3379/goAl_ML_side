@@ -119,7 +119,7 @@ def generate_overview(row, client, system_prompt):
                 contents=contents,
                 config=types.GenerateContentConfig(
                     system_instruction=system_prompt,
-                    temperature=0.3,
+                    temperature=0,
                     response_mime_type="application/json",
                 ),
             )
