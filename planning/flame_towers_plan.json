@@ -1,0 +1,69 @@
+[
+  {
+    "unit_name": "Flame Towers",
+    "wikidata_ids": [
+      "Q80499"
+    ],
+    "tier": "primary",
+    "duration_minutes": 90
+  },
+  {
+    "unit_name": "Martyrs' Lane Complex",
+    "wikidata_ids": [
+      "Q2664885",
+      "Q13668719",
+      "Q15196208",
+      "Q60738456"
+    ],
+    "tier": "primary",
+    "duration_minutes": 90
+  },
+  {
+    "unit_name": "Baku Funicular",
+    "wikidata_ids": [
+      "Q4075930"
+    ],
+    "tier": "secondary",
+    "duration_minutes": 20
+  },
+  {
+    "unit_name": "Alley of Honor",
+    "wikidata_ids": [
+      "Q2671033"
+    ],
+    "tier": "secondary",
+    "duration_minutes": 45
+  },
+  {
+    "unit_name": "Green Theatre",
+    "wikidata_ids": [
+      "Q597382"
+    ],
+    "tier": "secondary",
+    "duration_minutes": 20
+  },
+  {
+    "unit_name": "Həzi Aslanovun heykəli",
+    "wikidata_ids": [
+      "Q65279145"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "MOIK Stadium",
+    "wikidata_ids": [
+      "Q4819227"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Neftchilar Avenue",
+    "wikidata_ids": [
+      "Q4381302"
+    ],
+    "tier": "anchor_self",
+    "duration_minutes": null
+  }
+]

@@ -1,0 +1,67 @@
+[
+  {
+    "type": "stop",
+    "unit_name": "Maiden Tower",
+    "wikidata_ids": [
+      "Q842822"
+    ],
+    "tier": "primary",
+    "offset": 0,
+    "duration_minutes": 90
+  },
+  {
+    "type": "transport",
+    "mode": "walk",
+    "offset": 90,
+    "duration_minutes": 4
+  },
+  {
+    "type": "stop",
+    "unit_name": "Muhammad Mosque",
+    "wikidata_ids": [
+      "Q1535049"
+    ],
+    "tier": "secondary",
+    "offset": 94,
+    "duration_minutes": 45
+  },
+  {
+    "type": "transport",
+    "mode": "walk",
+    "offset": 139,
+    "duration_minutes": 2
+  },
+  {
+    "type": "stop",
+    "unit_name": "Palace of the Shirvanshahs Complex",
+    "wikidata_ids": [
+      "Q338889",
+      "Q7126183",
+      "Q12841258",
+      "Q16414684",
+      "Q31271606",
+      "Q4273786",
+      "Q1521003",
+      "Q12842301"
+    ],
+    "tier": "primary",
+    "offset": 141,
+    "duration_minutes": 180
+  },
+  {
+    "type": "transport",
+    "mode": "walk",
+    "offset": 321,
+    "duration_minutes": 5
+  },
+  {
+    "type": "stop",
+    "unit_name": "Ismailiyya Palace",
+    "wikidata_ids": [
+      "Q4189918"
+    ],
+    "tier": "secondary",
+    "offset": 326,
+    "duration_minutes": 20
+  }
+]

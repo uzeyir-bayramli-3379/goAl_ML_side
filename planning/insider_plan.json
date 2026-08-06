@@ -8,7 +8,8 @@
       "Q16414684",
       "Q31271606",
       "Q4273786",
-      "Q1521003"
+      "Q1521003",
+      "Q12842301"
     ],
     "tier": "primary",
     "duration_minutes": 180
@@ -30,10 +31,10 @@
     "duration_minutes": 90
   },
   {
-    "unit_name": "National Museum of History of Azerbaijan (Taghiyev Palace)",
+    "unit_name": "National Museum of History of Azerbaijan",
     "wikidata_ids": [
-      "Q20578458",
-      "Q2664428"
+      "Q2664428",
+      "Q20578458"
     ],
     "tier": "primary",
     "duration_minutes": 90
@@ -47,20 +48,29 @@
     "duration_minutes": 90
   },
   {
-    "unit_name": "Muhammad Mosque (Siniggala Mosque)",
+    "unit_name": "Juma Mosque in Baku",
     "wikidata_ids": [
-      "Q1535049"
+      "Q4160569"
     ],
     "tier": "primary",
     "duration_minutes": 90
   },
   {
-    "unit_name": "Juma Mosque in Baku",
+    "unit_name": "Beyler Mosque & Museum of Sacred Relics",
     "wikidata_ids": [
-      "Q4160569"
+      "Q12838048",
+      "Q106169267"
     ],
     "tier": "secondary",
     "duration_minutes": 45
+  },
+  {
+    "unit_name": "Muhammad Mosque",
+    "wikidata_ids": [
+      "Q1535049"
+    ],
+    "tier": "secondary",
+    "duration_minutes": null
   },
   {
     "unit_name": "Baku Museum of Miniature Books",
@@ -68,19 +78,26 @@
       "Q2559058"
     ],
     "tier": "secondary",
-    "duration_minutes": 20
+    "duration_minutes": 45
   },
   {
-    "unit_name": "Chin (Jinn) Mosque",
+    "unit_name": "Sheikh Ibrahim Mosque",
     "wikidata_ids": [
-      "Q12848542",
-      "Q16415094"
+      "Q12849537"
     ],
     "tier": "secondary",
     "duration_minutes": 20
   },
   {
-    "unit_name": "Ismailiyya building",
+    "unit_name": "Lezgi Mosque",
+    "wikidata_ids": [
+      "Q6538185"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Ismailiyya Palace",
     "wikidata_ids": [
       "Q4189918"
     ],
@@ -88,27 +105,9 @@
     "duration_minutes": 20
   },
   {
-    "unit_name": "Baku Puppet Theatre (former Phenomenon Cinema)",
+    "unit_name": "Independence Museum of Azerbaijan",
     "wikidata_ids": [
-      "Q85997389",
-      "Q597749"
-    ],
-    "tier": "secondary",
-    "duration_minutes": 45
-  },
-  {
-    "unit_name": "International Mugam Center of Azerbaijan",
-    "wikidata_ids": [
-      "Q2559447"
-    ],
-    "tier": "secondary",
-    "duration_minutes": 45
-  },
-  {
-    "unit_name": "Beyler Mosque and Museum of Sacred Relics",
-    "wikidata_ids": [
-      "Q12838048",
-      "Q106169267"
+      "Q4306396"
     ],
     "tier": "secondary",
     "duration_minutes": 45
@@ -130,119 +129,49 @@
     "duration_minutes": 20
   },
   {
-    "unit_name": "Nizami Museum of Azerbaijani Literature",
+    "unit_name": "Baku Puppet Theatre",
     "wikidata_ids": [
-      "Q2500152"
+      "Q597749",
+      "Q85997389"
     ],
     "tier": "secondary",
     "duration_minutes": 45
   },
   {
-    "unit_name": "Monument to Nizami Ganjavi in Baku",
+    "unit_name": "Nizami Museum of Azerbaijani Literature",
     "wikidata_ids": [
-      "Q2790637"
+      "Q2500152"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "International Mugham Center of Azerbaijan",
+    "wikidata_ids": [
+      "Q2559447"
     ],
     "tier": "secondary",
-    "duration_minutes": 20
+    "duration_minutes": 45
   },
   {
-    "unit_name": "Palace of Happiness",
+    "unit_name": "Chin (Jinn) Mosque",
     "wikidata_ids": [
-      "Q4155891"
+      "Q12848542",
+      "Q16415094"
     ],
-    "tier": "secondary",
-    "duration_minutes": 20
-  },
-  {
-    "unit_name": "Old City of Baku",
-    "wikidata_ids": [
-      "Q344569"
-    ],
-    "tier": "anchor_self",
+    "tier": "ambient",
     "duration_minutes": null
   },
   {
-    "unit_name": "Baku fortress",
+    "unit_name": "House-Museum of Tahir Salahov",
     "wikidata_ids": [
-      "Q6869733"
+      "Q30119475"
     ],
-    "tier": "anchor_self",
+    "tier": "ambient",
     "duration_minutes": null
   },
   {
-    "unit_name": "Kichik Gala street",
-    "wikidata_ids": [
-      "Q29854113"
-    ],
-    "tier": "anchor_self",
-    "duration_minutes": null
-  },
-  {
-    "unit_name": "Asef Zeynali street",
-    "wikidata_ids": [
-      "Q29965119"
-    ],
-    "tier": "anchor_self",
-    "duration_minutes": null
-  },
-  {
-    "unit_name": "Salyan Gate of Baku Fortress",
-    "wikidata_ids": [
-      "Q106586993"
-    ],
-    "tier": "anchor_self",
-    "duration_minutes": null
-  },
-  {
-    "unit_name": "Sabir Street",
-    "wikidata_ids": [
-      "Q29994839"
-    ],
-    "tier": "anchor_self",
-    "duration_minutes": null
-  },
-  {
-    "unit_name": "Mirza Alakbar Sabir Garden",
-    "wikidata_ids": [
-      "Q4421712"
-    ],
-    "tier": "anchor_self",
-    "duration_minutes": null
-  },
-  {
-    "unit_name": "Boyuk Gala Street",
-    "wikidata_ids": [
-      "Q29934120"
-    ],
-    "tier": "anchor_self",
-    "duration_minutes": null
-  },
-  {
-    "unit_name": "Istiglaliyyat Street",
-    "wikidata_ids": [
-      "Q4472311"
-    ],
-    "tier": "anchor_self",
-    "duration_minutes": null
-  },
-  {
-    "unit_name": "Paired Fortress Gates",
-    "wikidata_ids": [
-      "Q30694329"
-    ],
-    "tier": "anchor_self",
-    "duration_minutes": null
-  },
-  {
-    "unit_name": "Fountains Square, Baku",
-    "wikidata_ids": [
-      "Q5474853"
-    ],
-    "tier": "anchor_self",
-    "duration_minutes": null
-  },
-  {
-    "unit_name": "Hajji Bani mosque",
+    "unit_name": "Hajji Bani Mosque",
     "wikidata_ids": [
       "Q12840111"
     ],
@@ -250,7 +179,7 @@
     "duration_minutes": null
   },
   {
-    "unit_name": "Hajji Heybat mosque",
+    "unit_name": "Hajji Heybat Mosque",
     "wikidata_ids": [
       "Q21012753"
     ],
@@ -274,9 +203,17 @@
     "duration_minutes": null
   },
   {
-    "unit_name": "Sheikh Ibrahim Mosque",
+    "unit_name": "Mir Jalal Pashayev House Museum",
     "wikidata_ids": [
-      "Q12849537"
+      "Q123692020"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Building of the Executive Authority of the Baku City",
+    "wikidata_ids": [
+      "Q25540504"
     ],
     "tier": "ambient",
     "duration_minutes": null
@@ -285,6 +222,14 @@
     "unit_name": "Agha Mikayil Bath",
     "wikidata_ids": [
       "Q14814854"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Mammadov's Residence",
+    "wikidata_ids": [
+      "Q47487564"
     ],
     "tier": "ambient",
     "duration_minutes": null
@@ -330,17 +275,25 @@
     "duration_minutes": null
   },
   {
-    "unit_name": "Independence Museum of Azerbaijan",
+    "unit_name": "ANAS House-Museum of Huseyn Javid",
     "wikidata_ids": [
-      "Q4306396"
+      "Q12840429"
     ],
     "tier": "ambient",
     "duration_minutes": null
   },
   {
-    "unit_name": "Lezgi Mosque",
+    "unit_name": "The House of Ramazanovs",
     "wikidata_ids": [
-      "Q6538185"
+      "Q97223556"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "House-Museum of Nariman Narimanov",
+    "wikidata_ids": [
+      "Q12843520"
     ],
     "tier": "ambient",
     "duration_minutes": null
@@ -349,6 +302,14 @@
     "unit_name": "Molla Ahmad Mosque",
     "wikidata_ids": [
       "Q12842223"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Mirza Ahmed Mosque",
+    "wikidata_ids": [
+      "Q19798499"
     ],
     "tier": "ambient",
     "duration_minutes": null
@@ -402,118 +363,6 @@
     "duration_minutes": null
   },
   {
-    "unit_name": "Baba Kuhi Bakuvi mosque",
-    "wikidata_ids": [
-      "Q20573552"
-    ],
-    "tier": "ambient",
-    "duration_minutes": null
-  },
-  {
-    "unit_name": "Murad’s Gate",
-    "wikidata_ids": [
-      "Q12842301"
-    ],
-    "tier": "ambient",
-    "duration_minutes": null
-  },
-  {
-    "unit_name": "Museum of Archaeology and Ethnography",
-    "wikidata_ids": [
-      "Q16416097"
-    ],
-    "tier": "ambient",
-    "duration_minutes": null
-  },
-  {
-    "unit_name": "Baku Khans' Palace",
-    "wikidata_ids": [
-      "Q12837306"
-    ],
-    "tier": "ambient",
-    "duration_minutes": null
-  },
-  {
-    "unit_name": "Underground Bath of Baku",
-    "wikidata_ids": [
-      "Q65275361"
-    ],
-    "tier": "ambient",
-    "duration_minutes": null
-  },
-  {
-    "unit_name": "Old City Museum Center",
-    "wikidata_ids": [
-      "Q81913783"
-    ],
-    "tier": "ambient",
-    "duration_minutes": null
-  },
-  {
-    "unit_name": "House-Museum of Tahir Salahov",
-    "wikidata_ids": [
-      "Q30119475"
-    ],
-    "tier": "ambient",
-    "duration_minutes": null
-  },
-  {
-    "unit_name": "Ədibin evi (Mir Jalal Pashayev House-Museum)",
-    "wikidata_ids": [
-      "Q123692020"
-    ],
-    "tier": "ambient",
-    "duration_minutes": null
-  },
-  {
-    "unit_name": "Building of the Executive Authority of the Baku City",
-    "wikidata_ids": [
-      "Q25540504"
-    ],
-    "tier": "ambient",
-    "duration_minutes": null
-  },
-  {
-    "unit_name": "Mammadov's Residence",
-    "wikidata_ids": [
-      "Q47487564"
-    ],
-    "tier": "ambient",
-    "duration_minutes": null
-  },
-  {
-    "unit_name": "ANAS House-Museum of Huseyn Javid",
-    "wikidata_ids": [
-      "Q12840429"
-    ],
-    "tier": "ambient",
-    "duration_minutes": null
-  },
-  {
-    "unit_name": "The House of Ramazanovs",
-    "wikidata_ids": [
-      "Q97223556"
-    ],
-    "tier": "ambient",
-    "duration_minutes": null
-  },
-  {
-    "unit_name": "House-Museum of Nariman Narimanov",
-    "wikidata_ids": [
-      "Q12843520"
-    ],
-    "tier": "ambient",
-    "duration_minutes": null
-  },
-  {
-    "unit_name": "Mirza Ahmed Mosque",
-    "wikidata_ids": [
-      "Q19798499"
-    ],
-    "tier": "ambient",
-    "duration_minutes": null
-  },
-  {
     "unit_name": "Monument to Mirza Alakbar Sabir",
     "wikidata_ids": [
       "Q4343255"
@@ -538,6 +387,22 @@
     "duration_minutes": null
   },
   {
+    "unit_name": "Palace of Happiness",
+    "wikidata_ids": [
+      "Q4155891"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Baba Kuhi Bakuvi mosque",
+    "wikidata_ids": [
+      "Q20573552"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
     "unit_name": "House-Museum of Kamil Aliyev",
     "wikidata_ids": [
       "Q30116254"
@@ -549,6 +414,14 @@
     "unit_name": "The House of Gubernator",
     "wikidata_ids": [
       "Q13668680"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Museum of Archaeology and Ethnography",
+    "wikidata_ids": [
+      "Q16416097"
     ],
     "tier": "ambient",
     "duration_minutes": null
@@ -578,6 +451,14 @@
     "duration_minutes": null
   },
   {
+    "unit_name": "Baku Khans' Palace",
+    "wikidata_ids": [
+      "Q12837306"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
     "unit_name": "Azerbaijan National Education Museum",
     "wikidata_ids": [
       "Q41504433"
@@ -589,6 +470,22 @@
     "unit_name": "Isa bey Hajinski’s House",
     "wikidata_ids": [
       "Q41692531"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Underground Bath of Baku",
+    "wikidata_ids": [
+      "Q65275361"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Monument to Nizami Ganjavi in Baku",
+    "wikidata_ids": [
+      "Q2790637"
     ],
     "tier": "ambient",
     "duration_minutes": null
@@ -618,6 +515,22 @@
     "duration_minutes": null
   },
   {
+    "unit_name": "Property of Haji Mustafa Rasulov",
+    "wikidata_ids": [
+      "Q105079015"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "House of Scientists",
+    "wikidata_ids": [
+      "Q21000431"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
     "unit_name": "House-Museum of Samad Vurgun",
     "wikidata_ids": [
       "Q16374671"
@@ -642,7 +555,7 @@
     "duration_minutes": null
   },
   {
-    "unit_name": "Yeni Avropa",
+    "unit_name": "Yeni Avropa (Former Hotel)",
     "wikidata_ids": [
       "Q25394143"
     ],
@@ -661,30 +574,6 @@
     "unit_name": "Azerbaijan State Theatre of Musical Comedy",
     "wikidata_ids": [
       "Q12836435"
-    ],
-    "tier": "ambient",
-    "duration_minutes": null
-  },
-  {
-    "unit_name": "Building of bank on Tarlan Aliyarbayov Street 5",
-    "wikidata_ids": [
-      "Q97302028"
-    ],
-    "tier": "ambient",
-    "duration_minutes": null
-  },
-  {
-    "unit_name": "Property of Haji Mustafa Rasulov",
-    "wikidata_ids": [
-      "Q105079015"
-    ],
-    "tier": "ambient",
-    "duration_minutes": null
-  },
-  {
-    "unit_name": "House of Scientists",
-    "wikidata_ids": [
-      "Q21000431"
     ],
     "tier": "ambient",
     "duration_minutes": null
@@ -709,6 +598,110 @@
     "unit_name": "Theatre of Taghiyev",
     "wikidata_ids": [
       "Q110706186"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Old City of Baku",
+    "wikidata_ids": [
+      "Q344569"
+    ],
+    "tier": "anchor_self",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Baku Fortress",
+    "wikidata_ids": [
+      "Q6869733"
+    ],
+    "tier": "anchor_self",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Kichik Gala street",
+    "wikidata_ids": [
+      "Q29854113"
+    ],
+    "tier": "anchor_self",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Asef Zeynali street",
+    "wikidata_ids": [
+      "Q29965119"
+    ],
+    "tier": "anchor_self",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Salyan Gate of Baku Fortress",
+    "wikidata_ids": [
+      "Q106586993"
+    ],
+    "tier": "anchor_self",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Boyuk Gala Street",
+    "wikidata_ids": [
+      "Q29934120"
+    ],
+    "tier": "anchor_self",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Sabir Street",
+    "wikidata_ids": [
+      "Q29994839"
+    ],
+    "tier": "anchor_self",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Mirza Alakbar Sabir Garden",
+    "wikidata_ids": [
+      "Q4421712"
+    ],
+    "tier": "anchor_self",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Istiglaliyyat Street",
+    "wikidata_ids": [
+      "Q4472311"
+    ],
+    "tier": "anchor_self",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Paired Fortress Gates",
+    "wikidata_ids": [
+      "Q30694329"
+    ],
+    "tier": "anchor_self",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Fountains Square, Baku",
+    "wikidata_ids": [
+      "Q5474853"
+    ],
+    "tier": "anchor_self",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Old City Museum Center",
+    "wikidata_ids": [
+      "Q81913783"
+    ],
+    "tier": "ambient",
+    "duration_minutes": null
+  },
+  {
+    "unit_name": "Building of bank on Tarlan Aliyarbayov Street 5",
+    "wikidata_ids": [
+      "Q97302028"
     ],
     "tier": "ambient",
     "duration_minutes": null

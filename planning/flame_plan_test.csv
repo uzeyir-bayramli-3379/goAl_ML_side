@@ -1,12 +1,25 @@
-wikidata_id,name,primary_class,sitelinks,meters_away
-Q80499,Flame Towers,building,36,0
-Q13668719,Mosque of the Martyrs,mosque,13,209.35280322
-Q2664885,Martyrs' Lane,monument,23,216.834747
-Q4075930,Baku Funicular,architectural structure,17,244.74461845
-Q15196208,Baku Turkish Martyrs' Memorial,monument,6,258.19073329
-Q60738456,Upland Cemetery,architectural structure,4,380.04373829
-Q597382,Green Theatre,building,7,382.53508573
-Q65279145,Həzi Aslanovun heykəli,monument,6,390.63201453
-Q2671033,Alley of Honor,architectural structure,14,511.73296179
-Q4819227,MOIK Stadium,building,5,546.19120041
-Q4381302,Neftchilar Avenue,architectural structure,8,670.11902387
+wikidata_id,name,primary_class,sitelinks,stop_eligible,wiki_extract,meters_away
+Q80499,Flame Towers,building,36,true,"The Flame Towers (Azerbaijani: Alov qüllələri) are a group of three skyscrapers in Baku, Azerbaijan. The main contractor, Dia Holdings, is owned by two brothers who are linked to Azerbaijan's ruling Aliyev family's network of offshore companies.
+The height of the tallest tower is 182 m (597 ft). The three flame-shaped towers are intended to symbolize the elements of fire, and are a reference to Azerbaijan's nickname ""The Land of Fire"", historically rooted in a region where natural gas flares emit from the ground and Zoroastrian worshipers considered flames to be a symbol of the divine (notably at the Ateshgah of Baku and Yanar Dag). 
+The three buildings (South, East and West) consist of 130 residential apartments over 33 floors, a Fairmont hotel tower that includes 250 rooms and 61 serviced apartments, and office blocks which provides a net 33,114 square meters of office space.",0
+Q13668719,Mosque of the Martyrs,mosque,13,true,"Şəhidlər Məscidi  türk məscidi olaraq da bilinir, Şəhidlər Xiyabanının yaxınlığında, Bakı şəhərində məsciddir. Məscid 1990-cı illərin əvvəllərində Türkiyə hökumətinin dəstəyi ilə tikilmişdir.
+Türk məscidinin fasadında ərəb və türk dillərində Quranın ""əl-Bəqərə"" surəsinin 154-cü ayəsi yazılmışdır:
+“Allah yolunda öldürülənlərə (şəhid olanlara) “ölü” deməyin. Əksinə, onlar (Allah dərgahında) diridirlər, lakin siz bunu dərk etmirsiniz.”",209.35280322
+Q2664885,Martyrs' Lane,monument,23,true,"Аллея шахидов (азерб. Şəhidlər Xiyabanı; до 1990 г. — Парк Кирова / Нагорный парк, азерб. Kirov Parkı / Dağlıq Park) — кладбище в Баку, где похоронены «шахиды» — в основном жертвы «Чёрного января» (126 человек) и азербайджанцы, погибшие в Первой карабахской войне. На Аллее существует также безымянная братская могила, в которой похоронены неопознанные тела убитых.",216.834747
+Q4075930,Baku Funicular,architectural structure,17,true,"Baku Funicular (Azerbaijani: Bakı funikulyoru) is a funicular system in Baku, Azerbaijan. It connects a square on Neftchilar Avenue and Martyrs' Lane. It is the first and remains the only funicular system in the country.",244.74461845
+Q15196208,Baku Turkish Martyrs' Memorial,monument,6,true,"The Baku Turkish Martyrs' Memorial (Azerbaijani: Bakı Türk Şəhidliyi, Turkish: Bakü Türk Şehitleri Anıtı) is a memorial dedicated to the Ottoman soldiers killed during the World War I in Azerbaijan. It is situated within the Martyrs' Lane (Azerbaijani: Şəhidlər Xiyabanı) in Baku. It consists of a monument, an alley with name plates of the martyrs and a mosque.",258.19073329
+Q60738456,Upland Cemetery,architectural structure,4,true,"The Upland Cemetery. (Azerbaijani: Dağüstü qəbiristanlığı) or the Pir-Vanzari Cemetery was a multi-confessional cemetery located in Baku until the first half of the 1930s. The cemetery was placed on the top of the Baku hill, known as Pirvanzari, situated to the southwest of the Chemberekend village, a suburb of Baku.
+On the Baku urban plan of 1899, compiled by the city engineer the Colonel Nikolai von der Nonne, it can be seen that the cemetery during this period consisted of a number of sections:
+Muslim, Orthodox, Catholic, Lutheran, Jewish and Molokan. Also, on the territory of the cemetery were located several chapels.
+In the first half of the 1930s, the cemetery was demolished, and a park named after Sergei Kirov was laid out on this site. In 1990, the bodies of the Black January tragedy victims, and
+subsequently those who died during the Karabakh war, were buried in the former Muslim part of the cemetery. Today, this area is known as the Martyrs' Alley.
+
+",380.04373829
+Q597382,Green Theatre,building,7,true,"The Green Theatre (Azerbaijani: Yaşıl teatr) is an open-air theatre in Baku, the capital city of Azerbaijan. The theatre seats 2,500 spectators.
+The theatre was built in the mid-1960s on the initiative of the city's mayor of the time Alish Lambaranski. The Green Theatre was built as a venue intended for important cultural events.
+In 1993, the theatre ceased functioning. In August 2005, Ilham Aliyev, the President of Azerbaijan ordered to carry out repairs works in the theatre. Speaking at the opening ceremony, Ilham Aliyev hoped that the venue would become ""the favourite entertainment place of the people of Baku"".",382.53508573
+Q65279145,Həzi Aslanovun heykəli,monument,6,true,"Памятник Ази Асланову – надгробный памятник, воздвигнутый в 1949 году в память о генерал-майоре Ази Асланове, единственном азербайджанце, дважды становившемся Героем Советского Союза.",390.63201453
+Q2671033,Alley of Honor,architectural structure,14,true,"Аллея почётного захоронения (азерб. Fəxri xiyaban) — некрополь, расположенный в центральной нагорной части города Баку (Парламентский проспект). Представляет собой аллеи, на которых похоронены видные азербайджанские деятели культуры, науки, литературы, искусства, Герои Советского Союза, политики, революционеры, отличившиеся в различных областях экономики и сельского хозяйства и заслужившие почётные звания, а также представители династии Алиевых.",511.73296179
+Q4819227,MOIK Stadium,building,5,true,"MOIK Stadium is a multi-use stadium in Baku, Azerbaijan.  It is currently used mostly for football matches. It serves as a home ground of MOIK Baku of the Azerbaijan Premier League.  The stadium holds 3,000 people spectators.",546.19120041
+Q4381302,Neftchilar Avenue,architectural structure,8,true,"Neftchiler Avenue (Azerbaijani: Neftçilər Prospekti; literally Oil Workers' Prospect) is an  arterial road in Baku, Azerbaijan. It begins at the west end of the Bayil district of Baku and continues east until terminating at Javanshir Bridge (formerly Gagarin Bridge), intersecting Uzeyir Hajibeyov Street. It is used as part of the Baku City Circuit, including the start/finish straight located next to Government House
+Previous names of Neftchiler Avenue were Alexander II Quay, Gubanov Quay, and Stalin Avenue. The street was named Neftchilar Avenue in 1961 in honour of workers of oil industry in Azerbaijan. The larger section of the avenue runs along Baku Boulevard.",670.11902387

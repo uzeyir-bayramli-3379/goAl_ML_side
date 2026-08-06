@@ -227,7 +227,7 @@ def enforce(units, df):
     for u in longs[MAX_LONG_UNITS:]:
         print(f"  180-cap: {u['unit_name']} -> 90")
         u["duration_minutes"] = 90
-
+    
     for u in units:
         if u["tier"] in ("ambient", "anchor_self"):
             u["duration_minutes"] = None
