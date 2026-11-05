@@ -1,0 +1,540 @@
+{
+  "day_1": {
+    "timeline": [
+      {
+        "type": "transport",
+        "mode": "walk",
+        "offset": 0,
+        "duration_minutes": 0,
+        "notes": "Walk 0 mins",
+        "inter_anchor": false
+      },
+      {
+        "type": "stop",
+        "unit_name": "Heydar Aliyev Center",
+        "wikidata_ids": [
+          "Q43928"
+        ],
+        "anchor": "Heydar Aliyev Center",
+        "tier": "primary",
+        "offset": 0,
+        "duration_minutes": 90
+      },
+      {
+        "type": "transport",
+        "mode": "walk",
+        "offset": 90,
+        "duration_minutes": 5,
+        "notes": "Walk 5 mins",
+        "inter_anchor": false
+      },
+      {
+        "type": "stop",
+        "unit_name": "Baku Convention Center",
+        "wikidata_ids": [
+          "Q20813015"
+        ],
+        "anchor": "Heydar Aliyev Center",
+        "tier": "secondary",
+        "offset": 95,
+        "duration_minutes": 45
+      },
+      {
+        "type": "transport",
+        "mode": "metro_walk",
+        "duration_minutes": 30,
+        "offset": 140,
+        "notes": "Metro + Walk (~4.2 km, ~30 min)",
+        "inter_anchor": true
+      },
+      {
+        "type": "stop",
+        "unit_name": "Palace of the Shirvanshahs Complex",
+        "wikidata_ids": [
+          "Q338889",
+          "Q7126183",
+          "Q12841258",
+          "Q16414684",
+          "Q31271606",
+          "Q4273786",
+          "Q1521003",
+          "Q12842301"
+        ],
+        "anchor": "Icherisheher",
+        "tier": "primary",
+        "offset": 170,
+        "duration_minutes": 180
+      }
+    ],
+    "total_duration_minutes": 350
+  },
+  "day_2": {
+    "timeline": [
+      {
+        "type": "stop",
+        "unit_name": "National Museum of History of Azerbaijan",
+        "wikidata_ids": [
+          "Q2664428",
+          "Q20578458"
+        ],
+        "anchor": "Icherisheher",
+        "tier": "primary",
+        "offset": 0,
+        "duration_minutes": 90
+      },
+      {
+        "type": "transport",
+        "mode": "walk",
+        "offset": 90,
+        "duration_minutes": 10,
+        "notes": "Walk 10 mins",
+        "inter_anchor": false
+      },
+      {
+        "type": "stop",
+        "unit_name": "Ismailiyya Palace",
+        "wikidata_ids": [
+          "Q4189918"
+        ],
+        "anchor": "Icherisheher",
+        "tier": "secondary",
+        "offset": 100,
+        "duration_minutes": 20
+      },
+      {
+        "type": "transport",
+        "mode": "walk",
+        "offset": 120,
+        "duration_minutes": 7,
+        "notes": "Walk 7 mins",
+        "inter_anchor": false
+      },
+      {
+        "type": "stop",
+        "unit_name": "Maiden Tower",
+        "wikidata_ids": [
+          "Q842822"
+        ],
+        "anchor": "Icherisheher",
+        "tier": "primary",
+        "offset": 127,
+        "duration_minutes": 90
+      },
+      {
+        "type": "transport",
+        "mode": "walk",
+        "offset": 217,
+        "duration_minutes": 4,
+        "notes": "Walk 4 mins",
+        "inter_anchor": false
+      },
+      {
+        "type": "stop",
+        "unit_name": "Muhammad Mosque",
+        "wikidata_ids": [
+          "Q1535049"
+        ],
+        "anchor": "Icherisheher",
+        "tier": "secondary",
+        "offset": 221,
+        "duration_minutes": 45
+      },
+      {
+        "type": "transport",
+        "mode": "walk",
+        "offset": 266,
+        "duration_minutes": 6,
+        "notes": "Walk 6 mins",
+        "inter_anchor": false
+      },
+      {
+        "type": "stop",
+        "unit_name": "National Art Museum of Azerbaijan",
+        "wikidata_ids": [
+          "Q2559128"
+        ],
+        "anchor": "Icherisheher",
+        "tier": "primary",
+        "offset": 272,
+        "duration_minutes": 90
+      }
+    ],
+    "total_duration_minutes": 362
+  },
+  "day_3": {
+    "timeline": [
+      {
+        "type": "stop",
+        "unit_name": "Azerbaijan State Philharmonic Hall",
+        "wikidata_ids": [
+          "Q58823"
+        ],
+        "anchor": "Icherisheher",
+        "tier": "primary",
+        "offset": 0,
+        "duration_minutes": 90
+      },
+      {
+        "type": "transport",
+        "mode": "walk",
+        "offset": 90,
+        "duration_minutes": 5,
+        "notes": "Walk 5 mins",
+        "inter_anchor": false
+      },
+      {
+        "type": "stop",
+        "unit_name": "Baku Museum of Miniature Books",
+        "wikidata_ids": [
+          "Q2559058"
+        ],
+        "anchor": "Icherisheher",
+        "tier": "secondary",
+        "offset": 95,
+        "duration_minutes": 45
+      },
+      {
+        "type": "transport",
+        "mode": "walk",
+        "offset": 140,
+        "duration_minutes": 3,
+        "notes": "Walk 3 mins",
+        "inter_anchor": false
+      },
+      {
+        "type": "stop",
+        "unit_name": "Beyler Mosque & Museum of Sacred Relics",
+        "wikidata_ids": [
+          "Q12838048",
+          "Q106169267"
+        ],
+        "anchor": "Icherisheher",
+        "tier": "secondary",
+        "offset": 143,
+        "duration_minutes": 45
+      },
+      {
+        "type": "transport",
+        "mode": "walk",
+        "offset": 188,
+        "duration_minutes": 3,
+        "notes": "Walk 3 mins",
+        "inter_anchor": false
+      },
+      {
+        "type": "stop",
+        "unit_name": "Sheikh Ibrahim Mosque",
+        "wikidata_ids": [
+          "Q12849537"
+        ],
+        "anchor": "Icherisheher",
+        "tier": "secondary",
+        "offset": 191,
+        "duration_minutes": 20
+      },
+      {
+        "type": "transport",
+        "mode": "walk",
+        "offset": 211,
+        "duration_minutes": 3,
+        "notes": "Walk 3 mins",
+        "inter_anchor": false
+      },
+      {
+        "type": "stop",
+        "unit_name": "Juma Mosque in Baku",
+        "wikidata_ids": [
+          "Q4160569"
+        ],
+        "anchor": "Icherisheher",
+        "tier": "primary",
+        "offset": 214,
+        "duration_minutes": 90
+      },
+      {
+        "type": "transport",
+        "mode": "walk",
+        "offset": 304,
+        "duration_minutes": 6,
+        "notes": "Walk 6 mins",
+        "inter_anchor": false
+      },
+      {
+        "type": "stop",
+        "unit_name": "Baku Puppet Theatre",
+        "wikidata_ids": [
+          "Q597749",
+          "Q85997389"
+        ],
+        "anchor": "Icherisheher",
+        "tier": "secondary",
+        "offset": 310,
+        "duration_minutes": 45
+      }
+    ],
+    "total_duration_minutes": 355
+  },
+  "day_4": {
+    "timeline": [
+      {
+        "type": "stop",
+        "unit_name": "Independence Museum of Azerbaijan",
+        "wikidata_ids": [
+          "Q4306396"
+        ],
+        "anchor": "Icherisheher",
+        "tier": "secondary",
+        "offset": 0,
+        "duration_minutes": 45
+      },
+      {
+        "type": "transport",
+        "mode": "walk",
+        "offset": 45,
+        "duration_minutes": 7,
+        "notes": "Walk 7 mins",
+        "inter_anchor": false
+      },
+      {
+        "type": "stop",
+        "unit_name": "Multani Caravanserai",
+        "wikidata_ids": [
+          "Q12842275"
+        ],
+        "anchor": "Icherisheher",
+        "tier": "secondary",
+        "offset": 52,
+        "duration_minutes": 20
+      },
+      {
+        "type": "transport",
+        "mode": "walk",
+        "offset": 72,
+        "duration_minutes": 0,
+        "notes": "Walk 0 mins",
+        "inter_anchor": false
+      },
+      {
+        "type": "stop",
+        "unit_name": "Bukhara Caravanserai",
+        "wikidata_ids": [
+          "Q25536644"
+        ],
+        "anchor": "Icherisheher",
+        "tier": "secondary",
+        "offset": 72,
+        "duration_minutes": 20
+      },
+      {
+        "type": "transport",
+        "mode": "walk",
+        "offset": 92,
+        "duration_minutes": 12,
+        "notes": "Walk 12 mins",
+        "inter_anchor": false
+      },
+      {
+        "type": "stop",
+        "unit_name": "International Mugham Center of Azerbaijan",
+        "wikidata_ids": [
+          "Q2559447"
+        ],
+        "anchor": "Icherisheher",
+        "tier": "secondary",
+        "offset": 104,
+        "duration_minutes": 45
+      },
+      {
+        "type": "transport",
+        "mode": "walk",
+        "duration_minutes": 15,
+        "offset": 149,
+        "notes": "Walk (~1.3 km)",
+        "inter_anchor": true
+      },
+      {
+        "type": "stop",
+        "unit_name": "Azerbaijan Railway Museum",
+        "wikidata_ids": [
+          "Q123753947"
+        ],
+        "anchor": "Opera and Ballet",
+        "tier": "primary",
+        "offset": 164,
+        "duration_minutes": 90
+      },
+      {
+        "type": "transport",
+        "mode": "walk",
+        "offset": 254,
+        "duration_minutes": 10,
+        "notes": "Walk 10 mins",
+        "inter_anchor": false
+      },
+      {
+        "type": "stop",
+        "unit_name": "Azerbaijan State Academic Opera and Ballet Theater",
+        "wikidata_ids": [
+          "Q48623"
+        ],
+        "anchor": "Opera and Ballet",
+        "tier": "primary",
+        "offset": 264,
+        "duration_minutes": 90
+      },
+      {
+        "type": "transport",
+        "mode": "walk",
+        "offset": 354,
+        "duration_minutes": 11,
+        "notes": "Walk 11 mins",
+        "inter_anchor": false
+      },
+      {
+        "type": "stop",
+        "unit_name": "Synagogue of the Ashkenazi Jews in Baku",
+        "wikidata_ids": [
+          "Q196266"
+        ],
+        "anchor": "Opera and Ballet",
+        "tier": "secondary",
+        "offset": 365,
+        "duration_minutes": 20
+      }
+    ],
+    "total_duration_minutes": 385
+  },
+  "day_5": {
+    "timeline": [
+      {
+        "type": "stop",
+        "unit_name": "Heydar Aliyev Palace and Monument",
+        "wikidata_ids": [
+          "Q2078074",
+          "Q16368673"
+        ],
+        "anchor": "Opera and Ballet",
+        "tier": "secondary",
+        "offset": 0,
+        "duration_minutes": 45
+      },
+      {
+        "type": "transport",
+        "mode": "walk",
+        "offset": 45,
+        "duration_minutes": 8,
+        "notes": "Walk 8 mins",
+        "inter_anchor": false
+      },
+      {
+        "type": "stop",
+        "unit_name": "Church of the Saviour",
+        "wikidata_ids": [
+          "Q2029345"
+        ],
+        "anchor": "Opera and Ballet",
+        "tier": "primary",
+        "offset": 53,
+        "duration_minutes": 90
+      },
+      {
+        "type": "transport",
+        "mode": "walk",
+        "offset": 143,
+        "duration_minutes": 5,
+        "notes": "Walk 5 mins",
+        "inter_anchor": false
+      },
+      {
+        "type": "stop",
+        "unit_name": "Rashid Behbudov State Song Theatre and Monument",
+        "wikidata_ids": [
+          "Q7294887",
+          "Q30879151"
+        ],
+        "anchor": "Opera and Ballet",
+        "tier": "secondary",
+        "offset": 148,
+        "duration_minutes": 45
+      },
+      {
+        "type": "transport",
+        "mode": "walk",
+        "offset": 193,
+        "duration_minutes": 3,
+        "notes": "Walk 3 mins",
+        "inter_anchor": false
+      },
+      {
+        "type": "stop",
+        "unit_name": "House-Museum of Bulbul and Monument",
+        "wikidata_ids": [
+          "Q37926509",
+          "Q25541964"
+        ],
+        "anchor": "Opera and Ballet",
+        "tier": "secondary",
+        "offset": 196,
+        "duration_minutes": 45
+      },
+      {
+        "type": "transport",
+        "mode": "walk",
+        "offset": 241,
+        "duration_minutes": 0,
+        "notes": "Walk 0 mins",
+        "inter_anchor": false
+      },
+      {
+        "type": "stop",
+        "unit_name": "Azerbaijan State Theatre of Young Spectators",
+        "wikidata_ids": [
+          "Q2671722"
+        ],
+        "anchor": "Opera and Ballet",
+        "tier": "secondary",
+        "offset": 241,
+        "duration_minutes": 45
+      },
+      {
+        "type": "transport",
+        "mode": "walk",
+        "offset": 286,
+        "duration_minutes": 9,
+        "notes": "Walk 9 mins",
+        "inter_anchor": false
+      },
+      {
+        "type": "stop",
+        "unit_name": "Azerbaijan State Museum of Musical Culture",
+        "wikidata_ids": [
+          "Q4058262"
+        ],
+        "anchor": "Opera and Ballet",
+        "tier": "secondary",
+        "offset": 295,
+        "duration_minutes": 45
+      },
+      {
+        "type": "transport",
+        "mode": "walk",
+        "offset": 340,
+        "duration_minutes": 3,
+        "notes": "Walk 3 mins",
+        "inter_anchor": false
+      },
+      {
+        "type": "stop",
+        "unit_name": "Parachute tower in Baku",
+        "wikidata_ids": [
+          "Q4345043"
+        ],
+        "anchor": "Opera and Ballet",
+        "tier": "secondary",
+        "offset": 343,
+        "duration_minutes": 20
+      }
+    ],
+    "total_duration_minutes": 363
+  }
+}

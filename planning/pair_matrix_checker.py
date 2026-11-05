@@ -53,11 +53,15 @@ def get_db_coordinates(wikidata_ids, db_url):
     conn = psycopg2.connect(db_url)
     cursor = conn.cursor()
     
-    # Query the database using the schema provided
+    # FIX: Extract coordinates directly from the geom column using ST_Y and ST_X.
     query = """
-        SELECT wikidata_id, latitude, longitude 
-        FROM landmarks 
-        WHERE wikidata_id = ANY(%s);
+        SELECT l.wikidata_id, 
+               ST_Y(l.geom::geometry) AS lat, 
+               ST_X(l.geom::geometry) AS lng,
+               a.name AS anchor_name
+        FROM landmarks l
+        LEFT JOIN anchors a ON l.anchor_id = a.id
+        WHERE l.wikidata_id = ANY(%s);
     """
     cursor.execute(query, (wikidata_ids,))
     rows = cursor.fetchall()
@@ -65,7 +69,17 @@ def get_db_coordinates(wikidata_ids, db_url):
     cursor.close()
     conn.close()
     
-    return {row[0]: (row[1], row[2]) for row in rows if row[1] is not None and row[2] is not None}
+    # Fails loudly if a coordinate is missing, rather than defaulting to 0.0
+    valid_coords = {}
+    anchor_mapping = {}
+    for row in rows:
+        if row[1] is None or row[2] is None:
+            raise ValueError(f"Missing geometry for wikidata_id: {row[0]}")
+        valid_coords[row[0]] = (row[1], row[2])
+        if row[3] is not None:
+            anchor_mapping[row[0]] = row[3]
+        
+    return valid_coords,anchor_mapping
 
 def get_unit_centroid(unit, db_coordinates):
     """Averages the coordinates of all landmarks in a unit[cite: 2]."""
@@ -82,21 +96,30 @@ def get_unit_centroid(unit, db_coordinates):
     return sum(lats) / len(lats), sum(lngs) / len(lngs)
 
 def build_distance_matrix(scheduled_units, db_coordinates):
-    """Builds the symmetric matrix of walk minutes between all unit pairs[cite: 2]."""
+    """Builds the symmetric matrix of walk minutes, strictly isolated per anchor."""
     dist_matrix = {}
     
     centroids = {u['unit_name']: get_unit_centroid(u, db_coordinates) for u in scheduled_units}
     
-    for u1, u2 in combinations(scheduled_units, 2):
-        name1, name2 = u1['unit_name'], u2['unit_name']
-        lat1, lng1 = centroids[name1]
-        lat2, lng2 = centroids[name2]
-        
-        m = haversine(lat1, lng1, lat2, lng2)
-        mins = walk_minutes(m)
-        
-        dist_matrix[(name1, name2)] = mins
-        dist_matrix[(name2, name1)] = mins
+    # 1. Group units by anchor
+    units_by_anchor = {}
+    for u in scheduled_units:
+        anchor = u.get('anchor')
+        if anchor:
+            units_by_anchor.setdefault(anchor, []).append(u)
+            
+    # 2. Only compute pairs inside the same anchor
+    for anchor_name, units_in_anchor in units_by_anchor.items():
+        for u1, u2 in combinations(units_in_anchor, 2):
+            name1, name2 = u1['unit_name'], u2['unit_name']
+            lat1, lng1 = centroids[name1]
+            lat2, lng2 = centroids[name2]
+            
+            m = haversine(lat1, lng1, lat2, lng2)
+            mins = walk_minutes(m)
+            
+            dist_matrix[(name1, name2)] = mins
+            dist_matrix[(name2, name1)] = mins
         
     return dist_matrix
 
@@ -118,7 +141,12 @@ if __name__ == "__main__":
     all_wids = list(set(wid for u in scheduled_units for wid in u['wikidata_ids']))
     
     print(f"Fetching coordinates for {len(all_wids)} landmarks...")
-    db_coords = get_db_coordinates(all_wids, DATABASE_URL)
+    db_coords, anchor_mapping = get_db_coordinates(all_wids, DATABASE_URL)
+    
+    # Map the DB anchor values to the units before building the matrix
+    for u in scheduled_units:
+        unit_anchors = [anchor_mapping[wid] for wid in u.get('wikidata_ids', []) if wid in anchor_mapping]
+        u['anchor'] = unit_anchors[0] if unit_anchors else None
     
     print("Building distance matrix...\n")
     matrix = build_distance_matrix(scheduled_units, db_coords)
