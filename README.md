@@ -27,6 +27,7 @@ flowchart LR
     DB --> R[Two-stage retrieval<br/>geo filter → vector rerank]
     R --> N[Grounded Gemini answer]
     DB --> P[Planning model<br/>anchors → visit units → tiers]
+    P --> D[Day planner<br/>select → order → time]
 ```
 
 ### 1. Landmark pipeline
@@ -63,7 +64,36 @@ Notable decisions:
 - **Wikipedia extracts inform duration** (a railway museum housed in a station is a 90-minute visit, not 180). Sitelinks still decide rank, so results stay reproducible across cities.
 - **Anchor and stop eligibility are separate columns:** can this be the centre of a day, versus can a visitor physically go there. Neither reads the coarse `primary_class`.
 - **Capacity is computed, not guessed.** Baku comes to about **32 hours of itinerary, roughly 5 days**: Icherisheher 17 h, Opera and Ballet 8.7 h, Flame Towers 6.3 h. The day picker can honestly offer 1 to 5.
-- **Generation and computation are different jobs.** Ordering and timing are arithmetic, and a model only narrates a finished plan. The query-time planner is specified in `docs/PACKER_HANDBOOK.md`.
+- **Generation and computation are different jobs.** The model groups and tiers; ordering and timing are plain code (next section). A model asked to schedule without a duration field or distance matrix invents a four-hour walk around the Old City walls, so I gave the planner those inputs instead of prompting harder.
+
+### 6. Day planner
+`planning/pack_day.py` and `planning/multi_daying.py` turn the visit-unit inventory into a timed, multi-day itinerary. No language model is involved; it is deterministic code.
+
+- **Anchor sequence:** day 1 starts in the anchor nearest the traveller's start point.
+- **Selection:** within a 350-minute daily visiting budget, units fill by tier, then by sitelinks. A unit that doesn't fit is skipped, so it never blocks the shorter ones behind it. When an anchor is exhausted with 90 minutes or more left, the day may hop to the next anchor, but only if a transit entry exists and the hop adds at least one stop.
+- **Ordering:** an exact brute-force travelling-salesman search over each anchor's stops (days hold 3 to 7).
+- **Timing:** offsets are computed cumulatively, so gaps can't appear. Walks and inter-anchor transit are explicit timeline items. Walk time is haversine distance × 1.4 detour ÷ 80 m/min.
+- **Transit between anchors** comes from a per-city table instead of a routing API, because straight-line distance is wrong across Baku's hill and metro.
+- `plan_tester.py` runs scenario tests on anchor sequencing and day selection.
+
+Output for Baku, built from the 128 visit units across the anchors, is a **5-day itinerary**:
+
+| Day | Anchors | Stops | Minutes (visits + walking + transit) |
+|---|---|---|---|
+| 1 | Heydar Aliyev Center → Icherisheher | 3 | 350 |
+| 2 | Icherisheher | 5 | 362 |
+| 3 | Icherisheher | 6 | 355 |
+| 4 | Icherisheher → Opera and Ballet | 7 | 385 |
+| 5 | Opera and Ballet | 7 | 363 |
+
+```
+Day 1 · 350 min
+  +0    Heydar Aliyev Center                      primary     90 min
+  +90   walk 5 min
+  +95   Baku Convention Center                    secondary   45 min
+  +140  metro + walk 30 min  (inter-anchor hop to Icherisheher)
+  +170  Palace of the Shirvanshahs Complex        primary    180 min
+```
 
 ## Decisions and course corrections
 Several parts of this design exist because something I built or assumed turned out to be wrong. I measured, then changed course:
@@ -108,13 +138,11 @@ The Places census and the Gemini steps use real API quota; use the `--dry-run` o
 | `get_amenities_places.py`, `get_amenities_extra.py` | Google Places census and top-up |
 | `postgresser.py`, `retrieval_of_top_l.py` | Loading, embeddings, two-stage retrieval |
 | `generate_overviews.py`, `prompts.py` | Grounded overview generation |
-| `planning/` | Visit-unit grouping agent and prompts |
+| `planning/` | Visit-unit grouping agent, day planner (`pack_day.py`, `multi_daying.py`) and the generated Baku itinerary |
 | `groundtruth_crosstab.py`, `ground_truth_50.csv` | Places-vs-OSM evaluation |
-| `sql/` | Schema and Baku seed data |
-| `docs/` | SQL cookbook and planner handbook |
-| `HANDOFF.md`, `HANDOFF_Claude.md` | Detailed design notes |
+| `HANDOFF.md`, `HANDOFF_Claude.md` | Detailed design notes: data pipeline, anchor model, capacity |
 
 ## Status
-Built over Jun – Aug 2026. The data, retrieval and planning layers are complete for Baku, and the schema is city-agnostic (`cities` and `anchors` tables). The query-time day planner is specified in `docs/PACKER_HANDBOOK.md`. Opening hours and prices are deliberately not served, since the data doesn't contain them.
+Built over Jun – Aug 2026. The data, retrieval, planning and day-planner layers work end to end for Baku, and the schema is city-agnostic (`cities` and `anchors` tables). Opening hours and prices are deliberately not served, since the data doesn't contain them.
 
 See `LICENSE`.
